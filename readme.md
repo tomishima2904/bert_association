@@ -1,6 +1,24 @@
 # 使い方
 1. パラメータを決める(現在はbert_experiment.pyに直打ちしている。configファイルの使用を推奨)
 2. bert_experiment.pyを実行する
+```
+python bert_experiment.py \
+	--output_words_from_bert=True \
+	--analysis_flag=True \
+	--framework_opt='tf' \
+	--model_opt='cl-tohoku' \
+	--brackets_flag=True \
+	--output_nayose_flag=True \
+ 	--output_nayose_flag=True \
+	--extract_noun_opt='mecab' \
+	--multi_stimulations_flag=True \
+	--category_flag=True \
+	--num_stimulations=5 \
+	--eval_opt='p' \
+	--dataset='喚語資料_除去2' \
+	--max_words=150 \
+	--target_layer=-1 
+```               
 3. result内に結果が出力される
 
 
