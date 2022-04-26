@@ -7,130 +7,84 @@ import ast
 import os
 import pandas as pd
 import fugashi
+import argparse
+import datetime
+import io,sys
 
 # 自作ファイルからのインポート
 from extract_hukusuu import SearchFromHukusuuSigeki
 import utils_tools
+from models import Model
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 
 # B4の頃から違法増築を繰り返した結果、一つのクラスに色々詰め込むゴミクラスが完成した...
 class BertAssociation():
     # kwargsとか使った方がいい...
-    def __init__(self, framework_flag=None, model_flag=None, sigeki_num=None, hukusuu_sigeki_flag=None, hukusuu_sigeki_dataset=None, toigo_flag=None, extract_verb_flag=None):
+    def __init__(self, args):
 
-        # ～flagと書いてあるけど、いくつかbool型じゃなくてstr型なので注意！
-        # flagと書いてあるけどstr型その1。モデルを定める。
-        self.model_flag = model_flag
+        self.args = args
 
-        # flagと書いてあるけどstr型その2。使用するフレームワークを定める(学習しないのであまり区別する意味はないが...)
-        self.framework_flag = framework_flag
+        self.model_opt = args.model_opt  # str. モデルを定める.
+        self.framework_opt = args.framework_opt  # str. 使用するフレームワークを定める(学習しないのであまり区別する意味はないが...)
 
         # 問い語(=限定語)を使用するかどうか。
         # Trueの場合は「都道府県は～」「色は～」という連想文になる。
         # Falseの場合は「言葉は～」という連想文になる。
         # utils_tools.pyに連想文を書いてある。
-        self.toigo_flag = toigo_flag
+        self.category_flag = args.category_flag
 
         # flagと書いてあるけどstr型その3。名詞を抽出する際に使用するライブラリ？を定める
         # mecab...MeCabを使用する
         # ginza...Ginzaを使用する
-        self.extract_verb_flag = extract_verb_flag
+        self.extract_noun_opt = args.extract_noun_opt
 
         # 名詞判定で使用するmecabの設定(環境に合わせて設定してね。これは相馬のローカル環境の例)
-        mecab_option = "-d C:/Users/yuya1/Anaconda3/envs/tensorflow-labo/lib/site-packages/ipadic/dicdir -r C:/Users/yuya1/Anaconda3/envs/tensorflow-labo/lib/site-packages/ipadic/dicdir/mecabrc"
+        mecab_option = args.mecab_path
 
-        if self.framework_flag == "tf":
+        if self.framework_opt == "tf":
             print(tf.__version__)
-            if self.model_flag == "cl-tohoku":
-                # 東北大学の乾研究室が作成した日本語BERTモデル
-                model_name = 'cl-tohoku/bert-base-japanese-whole-word-masking'
-                self.tokenizer = BertJapaneseTokenizer.from_pretrained(model_name)
-                self.model = TFBertForMaskedLM.from_pretrained(model_name, from_pt=True)
-                # Mecab
-                self.mecab = fugashi.GenericTagger(mecab_option)
-            elif self.model_flag == "addparts":
-                # 東北大学の乾研究室が作成した日本語BERTモデルを元に、名詞だけを事前学習したBERT
-                config = BertConfig.from_json_file('addparts/config.json')
-                self.tokenizer = BertJapaneseTokenizer.from_pretrained('addparts/vocab.txt', do_lower_case=False, word_tokenizer_type="mecab", mecab_dic_type='unidic_lite', unk_token='[UNK]', sep_token='[SEP]', pad_token='[PAD]', cls_token='[CLS]', mask_token='[MASK]')
-                self.model = TFBertForMaskedLM.from_pretrained('addparts/pytorch_model.bin', config=config, from_pt=True)
-                # Mecab
-                self.mecab = fugashi.GenericTagger(mecab_option)
-            elif self.model_flag == "gmlp":
-                from official.nlp.modeling.networks import gmlp_encoder_remake
-                from official.nlp.modeling import models
-                from official.modeling import tf_utils
-                from official.nlp.gmlp import configs
-
-                transformer_encoder = gmlp_encoder_remake.GmlpEncoder(
-                    vocab_size=32768,
-                    hidden_size=768,
-                    num_layers=24,
-                    sequence_length=128,
-                    activation=tf.nn.swish,
-                    initializer=tf.keras.initializers.TruncatedNormal(stddev=0.02),
-                    return_all_encoder_outputs=False,
-                    output_range=None,
-                    embedding_width=None,
-                    embedding_layer=None,
-                    max_sequence_length=None,
-                    type_vocab_size=0,
-                    num_attention_heads=0,
-                    intermediate_size=0,
-                    dropout_rate=0.0,
-                    attention_dropout_rate=0.0)
-                self.model = models.GmlpPretrainer(
-                    network=transformer_encoder,
-                    embedding_table=transformer_encoder.get_embedding_table(),
-                    num_classes=2,  # The next sentence prediction label has two classes.
-                    activation=tf_utils.get_activation(
-                        configs.GmlpConfig.from_json_file("gMLP/config.json").hidden_act),
-                    num_token_predictions=80,
-                    output='logits')
-
-                checkpoint = tf.train.Checkpoint(model=self.model)
-                checkpoint.restore("gMLP/gmlp_model_step_2000000.ckpt-5")
-
-                self.tokenizer = BertJapaneseTokenizer.from_pretrained('gMLP/vocab.txt', do_lower_case=False,
-                                                                       word_tokenizer_type="mecab",
-                                                                       mecab_dic_type='unidic_lite', unk_token='[UNK]',
-                                                                       sep_token='[SEP]', pad_token='[PAD]',
-                                                                       cls_token='[CLS]', mask_token='[MASK]')
-                self.mecab = fugashi.GenericTagger(mecab_option)
-
+            model_object = Model(mecab_option, args)
+            self.tokenizer = model_object.tokenizer
+            self.model = model_object.model
+            self.mecab = model_object.mecab
+            
         # spacy の ginza モデルをインストール
         self.ginza = spacy.load('ja_ginza')
 
-        if hukusuu_sigeki_flag:
-            self.hukusuu_sigeki = SearchFromHukusuuSigeki(dataset=hukusuu_sigeki_dataset)
+        if args.multi_stimulations_flag:
+            self.hukusuu_sigeki = SearchFromHukusuuSigeki(dataset=args.dataset)
             self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
             self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
             # 複数の刺激語バージョンにおける、正解と不正解のリスト
             self.dict_keywords = self.hukusuu_sigeki.get_dict()
             # 複数の刺激語バージョンにおける、採用する刺激語の数
-            self.sigeki_num = sigeki_num
+            self.num_stimulations = args.num_stimulations
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
             self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()
         else:
             pass
 
-        self.hukusuu_sigeki_flag = hukusuu_sigeki_flag
+        self.multi_stimulations_flag = args.multi_stimulations_flag
 
-    def __call__(self, results_csv, results_csv_attention, max_association, mask_kaxtuko_flag, output_nayose_flag):
+
+    def __call__(self, results_csv, results_csv_attention):
         results = []
-        results_attention_and_nama = []
+        results_attention_and_raw = []
         # 複数→1つバージョンでは、colorは正解の連想語、keywordsは刺激語のリストのリスト
         # (謝罪) 1つ→複数の頃の名残でcolorという変数名だけど、複数→1つでは正解の連想語が入ります...
         for color, keywords in self.dict_keywords.items():
-            if self.hukusuu_sigeki_flag:
+            if self.multi_stimulations_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
-                input_sentences = self.keywords_to_sentences(keywords=keywords, sigeki_num=self.sigeki_num, human_word=color, mask_kaxtuko_flag=mask_kaxtuko_flag)
+                input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=color)
             else:
                 pass
 
             # 連想語頻度表から単語を持ってくる.
-            if self.hukusuu_sigeki_flag:
+            if self.multi_stimulations_flag:
                 # 相馬が決定した87題の中には、同じ正解語が含まれる(例：魚)ので、
                 # 辞書のキーが魚、魚_2、魚_2_3のようになっている
                 # 正解を判定する際には「_2」や「_2_3」は取り除かれる
@@ -142,36 +96,36 @@ class BertAssociation():
             # 1つのキーワードで複数の入力文があるため, for文で愚直に回す
             for i, input_sentence in enumerate(input_sentences):
                 # 連想
-                # association_words_namasは出力単語そのまま(変数名のnamaは"生"。ローマ字で変数名を付けるのはやめよう！)
+                # association_words_rawsは出力単語そのまま(変数名のrawは"生"。ローマ字で変数名を付けるのはやめよう！)
                 # association_words_scoreは単語のスコア(おそらく、softmaxに通す前のlogits)
                 # attenion_resultはattention(一応、全てのTransformer層から出力してあるはず...)
-                association_words_namas, association_score_namas, attention_result = self.association(input_sentence, max_association, human_words)
+                association_words_raws, association_score_raws, attention_result = self.association(input_sentence, human_words)
 
                 # ここのfor文で出力単語そのままではなく、刺激語を除いたり名詞だけ抽出したりする
-                for association_words_nama, association_score_nama in zip(association_words_namas, association_score_namas):
+                for association_words_raw, association_score_raw in zip(association_words_raws, association_score_raws):
                     # 出力単語のうち、名詞だけ抽出する
-                    association_words, association_score, extract_num = self.extract_verb_from_output(association_words_nama, association_score_nama)
+                    association_words, association_score, extract_num = self.extract_noun_from_output(association_words_raw, association_score_raw)
 
                     # 刺激語を除く
-                    if self.hukusuu_sigeki_flag:
+                    if self.multi_stimulations_flag:
                         for keyword in keywords:
                             association_words, association_score, extract_num = self.extract_paraphrase_from_output(keyword, human_words, association_words, association_score)
                     else:
                         pass
 
                     # 出力単語のうち、同じ単語を除く(名寄せ)
-                    if output_nayose_flag:
+                    if self.args.output_nayose_flag:
                         association_words, association_score, extract_num = self.nayose_from_output(association_words, association_score)
 
                     # 結果を保存する
-                    if self.hukusuu_sigeki_flag:
+                    if self.multi_stimulations_flag:
                         result_list = [keywords, i, input_sentence, human_words, association_words, association_score]
-                        result_list_attentions_and_namas = [keywords, i, input_sentence, human_words, attention_result, association_words_nama, association_score_nama]
+                        result_list_attentions_and_raws = [keywords, i, input_sentence, human_words, attention_result, association_words_raw, association_score_raw]
                     else:
                         pass
 
                     results.append(result_list)
-                    results_attention_and_nama.append(result_list_attentions_and_namas)
+                    results_attention_and_raw.append(result_list_attentions_and_raws)
 
         # 結果を書き出す
         with open(results_csv, 'w', newline="", encoding="utf-8") as f:
@@ -181,10 +135,11 @@ class BertAssociation():
         # Attentionを書き出す
         with open(results_csv_attention, 'w', newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerows(results_attention_and_nama)
+            writer.writerows(results_attention_and_raw)
+
 
     # 刺激語を入力文に変換する
-    def keywords_to_sentences(self, keywords, sigeki_num, human_word, mask_kaxtuko_flag):
+    def keywords_to_sentences(self, keywords, human_word):
         """
         複数の刺激語バージョンにおける、連想文の作成
         """
@@ -192,8 +147,8 @@ class BertAssociation():
         input_sentences = []
 
         # 問い語(=限定語)を付与する場合
-        if self.toigo_flag:
-            if mask_kaxtuko_flag:
+        if self.category_flag:
+            if self.args.brackets_flag:
                 # MASKに鍵括弧「」を付ける場合
                 sentencess = utils_tools.hukusuu_sigeki_sentences_toigo_mask.items()
             else:
@@ -207,9 +162,9 @@ class BertAssociation():
                         sentence_parts = []
                         for part in parts:
                             if part == "%s":
-                                for i in range(sigeki_num):
+                                for i in range(self.args.num_stimulations):
                                     sentence_parts.append(keywords[i])
-                                    if i == (sigeki_num - 1):
+                                    if i == (self.args.num_stimulations - 1):
                                         pass
                                     else:
                                         sentence_parts.append("、")
@@ -220,7 +175,7 @@ class BertAssociation():
 
         # 問い語(=限定語)を付与しない場合
         else:
-            if mask_kaxtuko_flag:
+            if self.args.brackets_flag:
                 # MASKに鍵括弧「」を付ける場合
                 sentences = utils_tools.hukusuu_sigeki_sentences_mask.items()
             else:
@@ -232,9 +187,9 @@ class BertAssociation():
                 sentence_parts = []
                 for part in parts:
                     if part == "%s":
-                        for i in range(sigeki_num):
+                        for i in range(self.args.num_stimulations):
                             sentence_parts.append(keywords[i])
-                            if i == (sigeki_num - 1):
+                            if i == (self.args.num_stimulations - 1):
                                 pass
                             else:
                                 sentence_parts.append("、")
@@ -245,10 +200,11 @@ class BertAssociation():
 
         return input_sentences
 
+
     # 連想を行い, 上位n位までのリストを返す関数
-    def association(self, text, max_association, human_words):
+    def association(self, text, human_words):
         # textは 連想文
-        # max_associationは 出力する単語の数
+        # max_associationsは 出力する単語の数
         # human_words は 複数→1つバージョンでは正解の連想語
 
         # predictedsは、BERTの出力を格納するリスト
@@ -256,7 +212,7 @@ class BertAssociation():
         predicted_tokens_list = []
         predicted_values_list_list = []
 
-        if self.framework_flag == "tf":
+        if self.framework_opt == "tf":
 
             # テキストをトークナイザに入力(東北大学BERTの場合は、MeCab+WordPiece)
             tokenized_text = self.tokenizer.tokenize(text)
@@ -268,7 +224,7 @@ class BertAssociation():
             # トークンをIDに変換する
             tokenized_id = self.tokenizer.convert_tokens_to_ids(tokenized_text)
 
-            if self.model_flag == "cl-tohoku" or self.model_flag == "addparts":
+            if self.model_opt == "cl-tohoku" or self.model_opt == "addparts":
 
                 # 入力形式を整える
                 tokenized_tensor = tf.constant(tokenized_id)
@@ -286,9 +242,9 @@ class BertAssociation():
                 # 予想トップnを出力する
                 # valuesでスコアを確認できる(ソフトマックスに通す前のスコア、TFBertForMaskedLMのリファレンスで確認済み)
                 for index in masked_index:
-                    predicteds.append(tf.math.top_k(predictions[0, index], k=max_association))
+                    predicteds.append(tf.math.top_k(predictions[0, index], k=self.args.max_associations))
 
-            elif self.model_flag == "gmlp":
+            elif self.model_opt == "gmlp":
                 # 多分 tf.constant の長さを 128 にしないといけない
                 tokenized_tensor = tf.constant(tokenized_id)
                 zeros = tf.zeros([128 - len(tokenized_tensor)], tf.int32)
@@ -310,7 +266,7 @@ class BertAssociation():
                 outputs = self.model.predict(inputs)
                 output = outputs['masked_lm']
                 for i in range(len(masked_index)):
-                    predicteds.append(tf.math.top_k(output[0][i], k=max_association))
+                    predicteds.append(tf.math.top_k(output[0][i], k=self.args.max_associations))
                 attentions = None
 
         for predicted in predicteds:
@@ -325,18 +281,19 @@ class BertAssociation():
             predicted_values_list_list.append(predicted_values_list)
 
         # attentionsの分析を行う
-        if self.model_flag != "gmlp":
+        if self.model_opt != "gmlp":
             attention_result = self.analysis_attentions(attentions, tokenized_text, masked_index, human_words)
         else:
             attention_result = []
 
         return predicted_tokens_list, predicted_values_list_list, attention_result
 
+
     # attentionsの分析を行う関数(途中なので、ここを改造してほしい)
     def analysis_attentions(self, attentions, tokenized_text, masked_index, human_words):
-        if self.hukusuu_sigeki_flag:
+        if self.multi_stimulations_flag:
             # 分析対象のTransformer層(-1は最終層、この数値はconfigで変更できるようにした方がいい)
-            transformer_layers = [-1]
+            transformer_layers = [self.args.target_layer]
             # Attention_Headの数(本当はBERTのconfig.jsonを参照した方がいい)
             attention_head_num = 12
             """
@@ -352,37 +309,39 @@ class BertAssociation():
             attention_result = None
             return attention_result
 
+
     # 出力から名詞を除く関数
-    def extract_verb_from_output(self, association_words, association_score):
+    def extract_noun_from_output(self, association_words, association_score):
 
         # 単語のリストとスコアのリストを同時に更新する
-        association_words_extract_verb = []
-        association_score_extract_verb = []
+        association_words_extract_noun = []
+        association_score_extract_noun = []
 
         for i, association_word in enumerate(association_words):
             # [UNK]トークン と ## トークンを除く
             if association_word == "[UNK]" or "##" in association_word:
                 continue
             # ginzaで処理する場合
-            if self.extract_verb_flag == "ginza":
+            if self.extract_noun_opt == "ginza":
                 doc = self.ginza(association_word)
                 # print(doc)
                 if doc[0].pos_ == "NOUN" or doc[0].pos_ == "PROPN":
-                    association_words_extract_verb.append(association_word)
-                    association_score_extract_verb.append(association_score[i])
+                    association_words_extract_noun.append(association_word)
+                    association_score_extract_noun.append(association_score[i])
             # mecabで処理する場合
-            elif self.extract_verb_flag == "mecab":
+            elif self.extract_noun_opt == "mecab":
                 # mecab + 東北大学バージョン
-                if (self.model_flag == "cl-tohoku") or (self.model_flag == "addparts") or (self.model_flag == "gmlp"):
+                if (self.model_opt == "cl-tohoku") or (self.model_opt == "addparts") or (self.model_opt == "gmlp"):
                     nouns = [line.split()[0] for line in self.mecab.parse(association_word).splitlines()
                              if "名詞" in line.split()[-1]]
                     if nouns != []:
-                        association_words_extract_verb.append(nouns[0])
-                        association_score_extract_verb.append(association_score[i])
+                        association_words_extract_noun.append(nouns[0])
+                        association_score_extract_noun.append(association_score[i])
                 else:
                     pass
 
-        return association_words_extract_verb, association_score_extract_verb, len(association_words_extract_verb)
+        return association_words_extract_noun, association_score_extract_noun, len(association_words_extract_noun)
+
 
     # 刺激語や限定語を除く関数
     def extract_paraphrase_from_output(self, keyword, human_words, association_words, association_score):
@@ -393,7 +352,7 @@ class BertAssociation():
 
         for i, association_word in enumerate(association_words):
             # 連想文の〇〇、〇〇、〇〇...の都道府県は？の都道府県部分を除く
-            if self.hukusuu_sigeki_flag:
+            if self.multi_stimulations_flag:
                 if association_word == self.toigo[human_words[0]]:
                     continue
                 elif self.toigo[human_words[0]] == "都道府県" and association_word == "県":
@@ -408,6 +367,7 @@ class BertAssociation():
                 association_score_extract_paraphrase.append(association_score[i])
 
         return association_words_extract_paraphrase, association_score_extract_paraphrase, len(association_words_extract_paraphrase)
+
 
     # 出力を名寄せする関数
     def nayose_from_output(self, association_words, association_score):
@@ -434,6 +394,7 @@ class BertAssociation():
 
         return association_words_nayose, association_score_nayose, len(association_words_nayose)
 
+
     # results_csvを読み込む関数
     def read_results_csv(self, results_csv):
         try:
@@ -451,20 +412,22 @@ class BertAssociation():
         # 6...出力された単語のスコア
         return results
 
+
     # analysis_result_matchで使用する書き込み関数
     def write_csv_match(self, result_csv, csv_file):
         with open(csv_file, 'w', newline="",  encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerows(result_csv)
 
+
     # 出力結果の分析
-    def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval, max_word_num, another_flag):
+    def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval, max_word_num):
         results = self.read_results_csv(results_csv)
 
         # 出力した単語と正解の連想語が一致する場合にリストにぶち込んだりカウントを足したりする
         result_match = []
         for i, result in enumerate(results.itertuples()):
-            if another_flag == 293:
+            if self.args.another_analysis == 293:
                 human_words = ast.literal_eval(result[4])
 
                 for i, human_word in enumerate(human_words):
@@ -512,8 +475,9 @@ class BertAssociation():
 
         self.write_csv_match(result_match, output_csv)
 
+
     # スコアを算出する
-    def analysis_analysis_result_match(self, results_csv, output_csv, another_flag, ps, eval_flag):
+    def analysis_analysis_result_match(self, results_csv, output_csv):
         df = pd.read_csv(results_csv, header=None, engine="python")
         results = df[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
 
@@ -528,8 +492,8 @@ class BertAssociation():
         # 8...人間と出力が一致した単語のスコア,
 
         # 連想文の組み合わせ
-        if self.hukusuu_sigeki_flag:
-            if self.toigo_flag:
+        if self.multi_stimulations_flag:
+            if self.category_flag:
                 rensoubun_numbers = [[0]]
             else:
                 rensoubun_numbers = [[0]]
@@ -541,12 +505,12 @@ class BertAssociation():
                 # 連想文番号を書き出し
                 writer.writerow(rensoubun_number)
 
-                if another_flag == 293:
-                    def ana_ana_hukusuu(hukusuu_sigeki_flag, dict_keywords, kankei, kan=None, rank_p=None):
+                if self.args.another_analysis == 293:
+                    def ana_ana_hukusuu(dict_keywords, kankei, kan=None, rank_p=None):
                         word_num_dicts = []
                         word_num_dict = {}
                         scores = []
-                        if hukusuu_sigeki_flag:
+                        if self.args.multi_stimulations_flag:
                             keywords = dict_keywords
 
                         for keyword in keywords:
@@ -566,13 +530,13 @@ class BertAssociation():
                                 keyword = ast.literal_eval(result[5])[0]
                                 human_words_rank = int(result[6])
                                 if keyword in word_num_dict.keys():
-                                    if eval_flag == "MRR":
+                                    if self.args.eval_flag == "MRR":
                                         if human_words_rank == 0:
                                             # print(keyword, result[3])
                                             word_num_dict[keyword] += 0.0
                                         else:
                                             word_num_dict[keyword] += 1.0 / human_words_rank
-                                    elif eval_flag == "p":
+                                    elif self.args.eval_flag == "p":
                                         if human_words_rank == 0:
                                             pass
                                         elif human_words_rank <= rank_p:
@@ -601,119 +565,78 @@ class BertAssociation():
                                    "スポーツ", "場所", "国"]
 
                     for kan in kankei_list:
-                        if eval_flag == "MRR":
-                            ana_ana_hukusuu(hukusuu_sigeki_flag=self.hukusuu_sigeki_flag, dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan)
-                        elif eval_flag == "p":
-                            for p in ps:
-                                ana_ana_hukusuu(hukusuu_sigeki_flag=self.hukusuu_sigeki_flag, dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan, rank_p=p)
-
-
-
-### config ###
-
-# BERTから単語を出力するか(results_csvを作成するか)
-rensou_flag = True
-
-# 集計するか(analysisファイルを作成するか)
-analysis_flag = True
-
-# 使用するフレームワーク
-framework_flag = "tf"
-
-# 使用するBERTモデル
-model_flag = "cl-tohoku"
-
-# 連想文のMASKに鍵括弧を付けるか，刺激語に鍵括弧を付けるか
-mask_kaxtuko_flag = True
-
-# 出力を名寄せするか(基本的にTrue)
-output_nayose_flag = True
-
-# 名詞抽出は何を使うか
-extract_verb_flag = "mecab"
-
-# 複数刺激語バージョンかどうか(基本的にTrue)
-hukusuu_sigeki_flag = True
-
-# 問い語(=限定語)を使用する場合はTrue
-toigo_flag = True
-
-# 刺激語の数(喚語資料を使用する場合は 5 )
-sigeki_num = 5
-
-# 評価方法
-# pは、上位n語に正解語が含まれているかどうか(言語処理学会2022ではこの評価方法を用いた)
-# MRRは、MRRスコアを算出する
-eval_flag = "p"
-
-# 上位n語まで集計対象とするか
-# ps = [1]
-# の場合は 上位1語だけ対象
-# ps = [5]
-# の場合は 上位5語が対象
-ps = [1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150]
-# の場合は 上位1語、上位2語、...上位150語が対象
-
-# 使用するデータセット。
-# "複数単語からの連想実験/データセット/" の中にある
-hukusuu_sigeki_dataset = "喚語資料_除去2"
-
-# BERTから出力する単語の数
-max_association = 150
-max_word_num = 150
-
-# analysis_anotherの集計方式(複数→1つの場合は 293 でOK)
-# 293...複数→1つの連想で行う集計
-another_flag = 293
-
-# 分析バージョン
-analysis_version = "human5_nayose_disred_output_nayose"
-
-# この処理に共通する保存パス
-hiduke = "0420"
-
-# 出力するディレクトリ名を決めるための処理
-if mask_kaxtuko_flag:
-    kaxtuko_name = "「」有"
-else:
-    kaxtuko_name = "無"
-if another_flag == 293:
-    another_name = "hukusuu_sigeki1127"
-else:
-    another_name = "no_analysis"
-if hukusuu_sigeki_flag:
-    hukusuu_sigeki_name = "hukusuu_sigeki_%s" % sigeki_num
-else:
-    hukusuu_sigeki_name = "no_hukusuu_sigeki"
-if toigo_flag:
-    toigo_name = "toigo"
-else:
-    toigo_name = "no_toigo"
-
-save_dir_name = (hiduke, max_association, kaxtuko_name, analysis_version, another_name, model_flag, hukusuu_sigeki_name, toigo_name, extract_verb_flag, eval_flag)
-
-save_dir = "result/%s_%s_%s_%s_%s_%s_%s_%s_%s_%s/" % save_dir_name
-os.makedirs(save_dir, exist_ok=True)
-
-results_csv = save_dir + "result.csv"
-results_csv_attention = save_dir + "result_attentions_and_namas.csv"
-
-output1_csv = save_dir + "analysis.csv"
-output2_csv = save_dir + "analysis_analysis.csv"
-
+                        if self.args.eval_flag == "MRR":
+                            ana_ana_hukusuu(dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan)
+                        elif self.args.eval_flag == "p":
+                            for p in self.args.ps:
+                                ana_ana_hukusuu(dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan, rank_p=p)
 
 
 ### 実験 ###
 
-# bert_associationをインスタンス化
-bert_association = BertAssociation(framework_flag=framework_flag, model_flag=model_flag, hukusuu_sigeki_flag=hukusuu_sigeki_flag, sigeki_num=sigeki_num, hukusuu_sigeki_dataset=hukusuu_sigeki_dataset, toigo_flag=toigo_flag, extract_verb_flag=extract_verb_flag)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser("Setting configurations")
+    parser.add_argument('--output_words_from_bert', default=True, type=bool, help='Output words from BERT or not')
+    parser.add_argument('--analysis_flag', default=True, type=bool, help='Analyze or not')
+    parser.add_argument('--framework_opt', default='tf', type=str, help='Specify a framework')
+    parser.add_argument('--model_opt', default='cl-tohoku', type=str, help='Specify a BERT model')
+    parser.add_argument('--brackets_flag', default=True, type=bool, help='Adding brackets or not')
+    parser.add_argument('--output_nayose_flag', default=True, type=bool, help='Nayose or not')
+    parser.add_argument('--extract_noun_opt', default='mecab', type=str, help='Specify noun extracting model')
+    parser.add_argument('--multi_stimulations_flag', default=True, type=bool, help='Version of stimulating')
+    parser.add_argument('--category_flag', default=True, type=bool, help='Using categorizing word or not')
+    parser.add_argument('--num_stimulations', default=5, type=int, help='number of stimulating words')
+    parser.add_argument('--eval_opt', default='p', type=str, help='[p, MRR]')
+    parser.add_argument('--ps', default=[1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150], type=list, help='Specify ranks for analysis')
+    parser.add_argument('--dataset', default='喚語資料_除去2', type=str, help='dataset')
+    parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
+    parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
+    parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
+    parser.add_argument('--mecah_path', default="-d /usr/local/lib/python3.6/site-packages/ipadic/dicdir -r /usr/local/lib/python3.6/site-packages/ipadic/dicdir/mecabrc", type=str, help='path where mecab is')
+    args = parser.parse_args()
 
-# 単語を出力する
-if rensou_flag:
-    bert_association(results_csv=results_csv, results_csv_attention=results_csv_attention, max_association=max_association, mask_kaxtuko_flag=mask_kaxtuko_flag, output_nayose_flag=output_nayose_flag)
+    # bert_associationをインスタンス化
+    bert_association = BertAssociation(args)
 
-# 集計する
-if analysis_flag:
-    if another_flag == 0 or another_flag == 293:
-        bert_association.analysis_result_match_nayose(results_csv=results_csv, output_csv=output1_csv, bert_interval=1, max_word_num=max_word_num, another_flag=another_flag)
-        bert_association.analysis_analysis_result_match(results_csv=output1_csv, output_csv=output2_csv, another_flag=another_flag, eval_flag=eval_flag, ps=ps)
+    # 分析バージョン
+    # analysis_version = "human5_nayose_disred_output_nayose"
+
+    # この処理に共通する保存パス
+    t_delta = datetime.timedelta(hours=9)
+    JST = datetime.timezone(t_delta, 'JST')
+    now = datetime.datetime.now(JST)
+    date_time = now.strftime('%y%m%d_%H%M%S')
+
+    # 出力するディレクトリ名を決めるための処理
+    if args.brackets_flag: brackets = "brkt"
+    else: brackets = "WObrkt"
+
+    if args.another_analysis == 293: another_name = "anl"
+    else: another_name = "WOanl"
+
+    if args.multi_stimulations_flag: stims_name = "stims{}".format(args.num_stimulations)
+    else: stims_name = "WOstims"
+
+    if args.category_flag: cat_name = "cat"
+    else: cat_name = "WOcat"
+
+    # save_dir_name = (date_time, args.max_words, brackets, another_name, args.model_opt, stims_name, cat_name, args.extract_noun_opt, args.eval_opt)
+
+    save_dir = f"result/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}/"
+    os.makedirs(save_dir, exist_ok=True)
+
+    results_csv = save_dir + "result.csv"
+    results_csv_attention = save_dir + "result_attentions_and_raws.csv"
+
+    output1_csv = save_dir + "analysis.csv"
+    output2_csv = save_dir + "analysis_analysis.csv"
+
+    # 単語を出力する
+    if args.output_words_from_bert:
+        bert_association(results_csv=results_csv, results_csv_attention=results_csv_attention)
+
+    # 集計する
+    if args.analysis_flag:
+        if args.another_analysis == 0 or args.another_analysis == 293:
+            bert_association.analysis_result_match_nayose(results_csv=results_csv, output_csv=output1_csv, bert_interval=1)
+            bert_association.analysis_analysis_result_match(results_csv=output1_csv, output_csv=output2_csv)
