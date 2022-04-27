@@ -10,6 +10,7 @@ import fugashi
 import argparse
 import datetime
 import io,sys
+from distutils.util import strtobool
 
 # 自作ファイルからのインポート
 from extract_hukusuu import SearchFromHukusuuSigeki
@@ -576,15 +577,15 @@ class BertAssociation():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Setting configurations")
-    parser.add_argument('--output_words_from_bert', default=True, type=bool, help='Output words from BERT or not')
-    parser.add_argument('--analysis_flag', default=True, type=bool, help='Analyze or not')
+    parser.add_argument('--output_words_from_bert', default=True, type=strtobool, help='Output words from BERT or not')
+    parser.add_argument('--analysis_flag', default=True, type=strtobool, help='Analyze or not')
     parser.add_argument('--framework_opt', default='tf', type=str, help='Specify a framework')
     parser.add_argument('--model_opt', default='cl-tohoku', type=str, help='Specify a BERT model')
-    parser.add_argument('--brackets_flag', default=True, type=bool, help='Adding brackets or not')
-    parser.add_argument('--output_nayose_flag', default=True, type=bool, help='Nayose or not')
+    parser.add_argument('--brackets_flag', default=True, type=strtobool, help='Adding brackets or not')
+    parser.add_argument('--output_nayose_flag', default=True, type=strtobool, help='Nayose or not')
     parser.add_argument('--extract_noun_opt', default='mecab', type=str, help='Specify noun extracting model')
-    parser.add_argument('--multi_stimulations_flag', default=True, type=bool, help='Version of stimulating')
-    parser.add_argument('--category_flag', default=True, type=bool, help='Using categorizing word or not')
+    parser.add_argument('--multi_stimulations_flag', default=True, type=strtobool, help='Version of stimulating')
+    parser.add_argument('--category_flag', default=True, type=strtobool, help='Using categorizing word or not')
     parser.add_argument('--num_stimulations', default=5, type=int, help='number of stimulating words')
     parser.add_argument('--eval_opt', default='p', type=str, help='[p, MRR]')
     parser.add_argument('--ps', default=[1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150], type=list, help='Specify ranks for analysis')
