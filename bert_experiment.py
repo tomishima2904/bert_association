@@ -592,7 +592,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
-    parser.add_argument('--mecah_path', default="-d /usr/local/lib/python3.6/site-packages/ipadic/dicdir -r /usr/local/lib/python3.6/site-packages/ipadic/dicdir/mecabrc", type=str, help='path where mecab is')
+    parser.add_argument('--mecab_path', default="-d /usr/local/lib/python3.6/site-packages/ipadic/dicdir -r /usr/local/lib/python3.6/site-packages/ipadic/dicdir/mecabrc", type=str, help='path where mecab is')
     args = parser.parse_args()
 
     # bert_associationをインスタンス化
