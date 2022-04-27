@@ -9,7 +9,6 @@ python bert_experiment.py \
 	--model_opt='cl-tohoku' \
 	--brackets_flag=True \
 	--output_nayose_flag=True \
- 	--output_nayose_flag=True \
 	--extract_noun_opt='mecab' \
 	--multi_stimulations_flag=True \
 	--category_flag=True \

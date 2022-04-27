@@ -242,7 +242,7 @@ class BertAssociation():
                 # 予想トップnを出力する
                 # valuesでスコアを確認できる(ソフトマックスに通す前のスコア、TFBertForMaskedLMのリファレンスで確認済み)
                 for index in masked_index:
-                    predicteds.append(tf.math.top_k(predictions[0, index], k=self.args.max_associations))
+                    predicteds.append(tf.math.top_k(predictions[0, index], k=self.args.max_words))
 
             elif self.model_opt == "gmlp":
                 # 多分 tf.constant の長さを 128 にしないといけない
@@ -266,7 +266,7 @@ class BertAssociation():
                 outputs = self.model.predict(inputs)
                 output = outputs['masked_lm']
                 for i in range(len(masked_index)):
-                    predicteds.append(tf.math.top_k(output[0][i], k=self.args.max_associations))
+                    predicteds.append(tf.math.top_k(output[0][i], k=self.args.max_words))
                 attentions = None
 
         for predicted in predicteds:
@@ -421,7 +421,7 @@ class BertAssociation():
 
 
     # 出力結果の分析
-    def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval, max_word_num):
+    def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval):
         results = self.read_results_csv(results_csv)
 
         # 出力した単語と正解の連想語が一致する場合にリストにぶち込んだりカウントを足したりする
@@ -452,7 +452,7 @@ class BertAssociation():
                 human_words_rank = 0
 
                 # 単語1つ1つ走査する
-                for j in range(max_word_num):
+                for j in range(self.args.max_words):
                     if j < len(result_str_to_list_words):
                         bert_word = result_str_to_list_words[j]
 
@@ -565,9 +565,9 @@ class BertAssociation():
                                    "スポーツ", "場所", "国"]
 
                     for kan in kankei_list:
-                        if self.args.eval_flag == "MRR":
+                        if self.args.eval_opt == "MRR":
                             ana_ana_hukusuu(dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan)
-                        elif self.args.eval_flag == "p":
+                        elif self.args.eval_opt == "p":
                             for p in self.args.ps:
                                 ana_ana_hukusuu(dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan, rank_p=p)
 
@@ -622,7 +622,7 @@ if __name__ == '__main__':
 
     # save_dir_name = (date_time, args.max_words, brackets, another_name, args.model_opt, stims_name, cat_name, args.extract_noun_opt, args.eval_opt)
 
-    save_dir = f"result/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}/"
+    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}/"
     os.makedirs(save_dir, exist_ok=True)
 
     results_csv = save_dir + "result.csv"
