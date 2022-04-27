@@ -5,7 +5,7 @@ import pandas as pd
 
 
 class SearchFromHukusuuSigeki():
-    def __init__(self, dataset, path_for_jupyter=None):
+    def __init__(self, dataset, path_for_jupyter=None, encoding_type="utf-8"):
         if path_for_jupyter:
             path = path_for_jupyter
         else:
@@ -23,7 +23,7 @@ class SearchFromHukusuuSigeki():
         # キーワードと解答から dict型　を作成する
         for csv in self.path_keywords:
             # engine="python"を指定しないと動かない
-            df = pd.read_csv(csv, encoding="cp932", engine="python")
+            df = pd.read_csv(csv, encoding=encoding_type, engine="python")
             for row in df.itertuples():
                 self.sigeki_num = len(row)-3
                 key = row[1]
@@ -43,7 +43,7 @@ class SearchFromHukusuuSigeki():
         # paraphrase.csv から dict型 を作成する
         for csv in self.path_paraphrase:
             # engine="python"を指定しないと動かない
-            df = pd.read_csv(csv, header=None, encoding="cp932", engine="python")
+            df = pd.read_csv(csv, header=None, encoding=encoding_type, engine="python")
             for row in df.itertuples():
                 temp_num = len(row)-1
                 key = row[1]
@@ -57,7 +57,7 @@ class SearchFromHukusuuSigeki():
         # nayose.csv から dict型 を作成する
         for csv in self.path_nayose:
             # engine="python"を指定しないと動かない
-            df = pd.read_csv(csv, header=None, encoding="cp932", engine="python")
+            df = pd.read_csv(csv, header=None, encoding=encoding_type, engine="python")
             for row in df.itertuples():
                 temp_num = len(row)-1
                 key = row[1]
