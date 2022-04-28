@@ -28,8 +28,14 @@ tensorflow-gpu==2.3.0
 pandas==1.1.1
 spacy==3.2.1
 torch
-mecab
 fugashi
+mecab-python3
+#-U ginza ja-ginza
+tqdm
+numpy
+matplotlib
+scipy
+sklearn
 ```
 
 

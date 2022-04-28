@@ -583,7 +583,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_opt', default='cl-tohoku', type=str, help='Specify a BERT model')
     parser.add_argument('--brackets_flag', default=True, type=strtobool, help='Adding brackets or not')
     parser.add_argument('--output_nayose_flag', default=True, type=strtobool, help='Nayose or not')
-    parser.add_argument('--extract_noun_opt', default='mecab', type=str, help='Specify noun extracting model')
+    parser.add_argument('--extract_noun_opt', default='mecab', type=str, help='[mecab, ginza]')
     parser.add_argument('--multi_stimulations_flag', default=True, type=strtobool, help='Version of stimulating')
     parser.add_argument('--category_flag', default=True, type=strtobool, help='Using categorizing word or not')
     parser.add_argument('--num_stimulations', default=5, type=int, help='number of stimulating words')
