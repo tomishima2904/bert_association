@@ -30,6 +30,7 @@ spacy==3.2.1
 torch
 fugashi
 mecab-python3
+ipadic
 #-U ginza ja-ginza
 tqdm
 numpy
