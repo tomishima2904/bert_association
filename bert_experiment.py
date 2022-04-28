@@ -54,21 +54,21 @@ class BertAssociation():
         # spacy の ginza モデルをインストール
         self.ginza = spacy.load('ja_ginza')
 
-        if args.multi_stimulations_flag:
-            self.hukusuu_sigeki = SearchFromHukusuuSigeki(dataset=args.dataset)
+        if args.multi_stims_flag:
+            self.hukusuu_sigeki = SearchFromHukusuuSigeki(dataset=args.dataset, num_stims=args.num_stims)
             self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
             self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
             # 複数の刺激語バージョンにおける、正解と不正解のリスト
             self.dict_keywords = self.hukusuu_sigeki.get_dict()
             # 複数の刺激語バージョンにおける、採用する刺激語の数
-            self.num_stimulations = args.num_stimulations
+            self.num_stims = args.num_stims
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
             self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()
         else:
             pass
 
-        self.multi_stimulations_flag = args.multi_stimulations_flag
+        self.multi_stims_flag = args.multi_stims_flag
 
 
     def __call__(self, results_csv, results_csv_attention):
@@ -77,7 +77,7 @@ class BertAssociation():
         # 複数→1つバージョンでは、colorは正解の連想語、keywordsは刺激語のリストのリスト
         # (謝罪) 1つ→複数の頃の名残でcolorという変数名だけど、複数→1つでは正解の連想語が入ります...
         for color, keywords in self.dict_keywords.items():
-            if self.multi_stimulations_flag:
+            if self.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
                 input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=color)
@@ -85,7 +85,7 @@ class BertAssociation():
                 pass
 
             # 連想語頻度表から単語を持ってくる.
-            if self.multi_stimulations_flag:
+            if self.multi_stims_flag:
                 # 相馬が決定した87題の中には、同じ正解語が含まれる(例：魚)ので、
                 # 辞書のキーが魚、魚_2、魚_2_3のようになっている
                 # 正解を判定する際には「_2」や「_2_3」は取り除かれる
@@ -108,7 +108,7 @@ class BertAssociation():
                     association_words, association_score, extract_num = self.extract_noun_from_output(association_words_raw, association_score_raw)
 
                     # 刺激語を除く
-                    if self.multi_stimulations_flag:
+                    if self.multi_stims_flag:
                         for keyword in keywords:
                             association_words, association_score, extract_num = self.extract_paraphrase_from_output(keyword, human_words, association_words, association_score)
                     else:
@@ -119,7 +119,7 @@ class BertAssociation():
                         association_words, association_score, extract_num = self.nayose_from_output(association_words, association_score)
 
                     # 結果を保存する
-                    if self.multi_stimulations_flag:
+                    if self.multi_stims_flag:
                         result_list = [keywords, i, input_sentence, human_words, association_words, association_score]
                         result_list_attentions_and_raws = [keywords, i, input_sentence, human_words, attention_result, association_words_raw, association_score_raw]
                     else:
@@ -163,9 +163,9 @@ class BertAssociation():
                         sentence_parts = []
                         for part in parts:
                             if part == "%s":
-                                for i in range(self.args.num_stimulations):
+                                for i in range(self.args.num_stims):
                                     sentence_parts.append(keywords[i])
-                                    if i == (self.args.num_stimulations - 1):
+                                    if i == (self.args.num_stims - 1):
                                         pass
                                     else:
                                         sentence_parts.append("、")
@@ -188,9 +188,9 @@ class BertAssociation():
                 sentence_parts = []
                 for part in parts:
                     if part == "%s":
-                        for i in range(self.args.num_stimulations):
+                        for i in range(self.args.num_stims):
                             sentence_parts.append(keywords[i])
-                            if i == (self.args.num_stimulations - 1):
+                            if i == (self.args.num_stims - 1):
                                 pass
                             else:
                                 sentence_parts.append("、")
@@ -292,7 +292,7 @@ class BertAssociation():
 
     # attentionsの分析を行う関数(途中なので、ここを改造してほしい)
     def analysis_attentions(self, attentions, tokenized_text, masked_index, human_words):
-        if self.multi_stimulations_flag:
+        if self.multi_stims_flag:
             # 分析対象のTransformer層(-1は最終層、この数値はconfigで変更できるようにした方がいい)
             transformer_layers = [self.args.target_layer]
             # Attention_Headの数(本当はBERTのconfig.jsonを参照した方がいい)
@@ -353,7 +353,7 @@ class BertAssociation():
 
         for i, association_word in enumerate(association_words):
             # 連想文の〇〇、〇〇、〇〇...の都道府県は？の都道府県部分を除く
-            if self.multi_stimulations_flag:
+            if self.multi_stims_flag:
                 if association_word == self.toigo[human_words[0]]:
                     continue
                 elif self.toigo[human_words[0]] == "都道府県" and association_word == "県":
@@ -408,7 +408,7 @@ class BertAssociation():
         # 1...キーワード,
         # 2...入力文の番号,
         # 3...入力文,
-        # 4...目的の色,
+        # 4...目的の色(人間の答え?),
         # 5...出力された単語(150単語, 順位順, 出現しなかった場合は-1)
         # 6...出力された単語のスコア
         return results
@@ -493,7 +493,7 @@ class BertAssociation():
         # 8...人間と出力が一致した単語のスコア,
 
         # 連想文の組み合わせ
-        if self.multi_stimulations_flag:
+        if self.multi_stims_flag:
             if self.category_flag:
                 rensoubun_numbers = [[0]]
             else:
@@ -511,7 +511,7 @@ class BertAssociation():
                         word_num_dicts = []
                         word_num_dict = {}
                         scores = []
-                        if self.args.multi_stimulations_flag:
+                        if self.args.multi_stims_flag:
                             keywords = dict_keywords
 
                         for keyword in keywords:
@@ -584,12 +584,12 @@ if __name__ == '__main__':
     parser.add_argument('--brackets_flag', default=True, type=strtobool, help='Adding brackets or not')
     parser.add_argument('--output_nayose_flag', default=True, type=strtobool, help='Nayose or not')
     parser.add_argument('--extract_noun_opt', default='mecab', type=str, help='[mecab, ginza]')
-    parser.add_argument('--multi_stimulations_flag', default=True, type=strtobool, help='Version of stimulating')
+    parser.add_argument('--multi_stims_flag', default=True, type=strtobool, help='Version of stimulating')
     parser.add_argument('--category_flag', default=True, type=strtobool, help='Using categorizing word or not')
-    parser.add_argument('--num_stimulations', default=5, type=int, help='number of stimulating words')
+    parser.add_argument('--num_stims', default=5, type=int, help='number of stimulating words')
     parser.add_argument('--eval_opt', default='p', type=str, help='[p, MRR]')
     parser.add_argument('--ps', default=[1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150], type=list, help='Specify ranks for analysis')
-    parser.add_argument('--dataset', default='喚語資料_除去2', type=str, help='dataset')
+    parser.add_argument('--dataset', default='extract_keywordslist', type=str, help='dataset')
     parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
@@ -615,7 +615,7 @@ if __name__ == '__main__':
     if args.another_analysis == 293: another_name = "anl"
     else: another_name = "WOanl"
 
-    if args.multi_stimulations_flag: stims_name = "stims{}".format(args.num_stimulations)
+    if args.multi_stims_flag: stims_name = "stims{}".format(args.num_stims)
     else: stims_name = "WOstims"
 
     if args.category_flag: cat_name = "cat"
