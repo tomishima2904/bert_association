@@ -10,11 +10,11 @@ python bert_experiment.py \
 	--brackets_flag=True \
 	--output_nayose_flag=True \
 	--extract_noun_opt='mecab' \
-	--multi_stimulations_flag=True \
-	--category_flag=True \
-	--num_stimulations=5 \
+	--multi_stims_flag=True \
+	--category_flag=False \
+	--num_stims=5 \
 	--eval_opt='p' \
-	--dataset='喚語資料_除去2' \
+	--dataset='extract_keywordslist' \
 	--max_words=150 \
 	--target_layer=-1 
 ```               
