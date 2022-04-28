@@ -74,13 +74,13 @@ class BertAssociation():
     def __call__(self, results_csv, results_csv_attention):
         results = []
         results_attention_and_raw = []
-        # 複数→1つバージョンでは、colorは正解の連想語、keywordsは刺激語のリストのリスト
-        # (謝罪) 1つ→複数の頃の名残でcolorという変数名だけど、複数→1つでは正解の連想語が入ります...
-        for color, keywords in self.dict_keywords.items():
+        # 複数→1つバージョンでは、answerは正解の連想語、keywordsは刺激語のリストのリスト
+        # (謝罪) 1つ→複数の頃の名残でanswerという変数名だけど、複数→1つでは正解の連想語が入ります...
+        for j, (answer, keywords) in self.dict_keywords.items():
             if self.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
-                input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=color)
+                input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=answer)
             else:
                 pass
 
@@ -89,7 +89,7 @@ class BertAssociation():
                 # 相馬が決定した87題の中には、同じ正解語が含まれる(例：魚)ので、
                 # 辞書のキーが魚、魚_2、魚_2_3のようになっている
                 # 正解を判定する際には「_2」や「_2_3」は取り除かれる
-                human_words = [color]
+                human_words = [answer]
             else:
                 pass
             print(input_sentences)
@@ -404,7 +404,7 @@ class BertAssociation():
             df = pd.read_csv(results_csv, header=None, engine="python")
         print(df)
         results = df[[0, 1, 2, 3, 4, 5]]
-        # [keyword, i, input_sentence, color, association_words, association_score]
+        # [keyword, i, input_sentence, answer, association_words, association_score]
         # 1...キーワード,
         # 2...入力文の番号,
         # 3...入力文,

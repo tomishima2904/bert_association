@@ -5,7 +5,7 @@ import pandas as pd
 
 
 class SearchFromHukusuuSigeki():
-    def __init__(self, dataset, path_for_jupyter=None, encoding_type="utf-8"):
+    def __init__(self, dataset, num_stims, path_for_jupyter=None, encoding_type="utf-8"):
         if path_for_jupyter:
             path = path_for_jupyter
         else:
@@ -25,8 +25,8 @@ class SearchFromHukusuuSigeki():
             # engine="python"を指定しないと動かない
             df = pd.read_csv(csv, encoding=encoding_type, engine="python")
             for row in df.itertuples():
-                self.sigeki_num = len(row)-3
-                key = row[1]
+                self.sigeki_num = num_stims
+                key = row.answer
                 words = []
                 for i in range(self.sigeki_num):
                     word = row[i+2]
