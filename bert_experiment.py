@@ -76,7 +76,7 @@ class BertAssociation():
         results_attention_and_raw = []
         # 複数→1つバージョンでは、answerは正解の連想語、keywordsは刺激語のリストのリスト
         # (謝罪) 1つ→複数の頃の名残でanswerという変数名だけど、複数→1つでは正解の連想語が入ります...
-        for j, (answer, keywords) in enumerate(self.dict_keywords.items()):
+        for sid, (answer, keywords) in enumerate(self.dict_keywords.items()):
             if self.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
@@ -120,8 +120,8 @@ class BertAssociation():
 
                     # 結果を保存する
                     if self.multi_stims_flag:
-                        result_list = [keywords, i, input_sentence, human_words, association_words, association_score]
-                        result_list_attentions_and_raws = [keywords, i, input_sentence, human_words, attention_result, association_words_raw, association_score_raw]
+                        result_list = [keywords, sid, input_sentence, human_words, association_words, association_score]
+                        result_list_attentions_and_raws = [keywords, sid, input_sentence, human_words, attention_result, association_words_raw, association_score_raw]
                     else:
                         pass
 
@@ -431,8 +431,8 @@ class BertAssociation():
             if self.args.another_analysis == 293:
                 human_words = ast.literal_eval(result[4])
 
-                for i, human_word in enumerate(human_words):
-                    human_words[i] = ''.join([i for i in human_word if not i.isdigit()])
+                for l, human_word in enumerate(human_words):
+                    human_words[l] = ''.join([k for k in human_word if not k.isdigit()])
 
                 # 出力された単語とスコアのリスト
                 result_str_to_list_words = ast.literal_eval(result[5])
