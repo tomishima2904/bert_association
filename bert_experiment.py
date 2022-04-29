@@ -128,14 +128,19 @@ class BertAssociation():
                     results.append(result_list)
                     results_attention_and_raw.append(result_list_attentions_and_raws)
 
+        heaser_results = ['sid', 'stims', 'input_sentence', 'answer', 'output_words', 'output_scores']       
+        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'answer', 'analyzed_attn', 'output_raw_words', 'output_raw_scores']
+
         # 結果を書き出す
         with open(results_csv, 'w', newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
+            writer.writerow(heaser_results)
             writer.writerows(results)
 
         # Attentionを書き出す
         with open(results_csv_attention, 'w', newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
+            writer.writerow(header_attns_and_raws)
             writer.writerows(results_attention_and_raw)
 
 
@@ -399,11 +404,11 @@ class BertAssociation():
     # results_csvを読み込む関数
     def read_results_csv(self, results_csv):
         try:
-            df = pd.read_csv(results_csv, header=None, encoding="utf-8", engine="python")
+            df = pd.read_csv(results_csv, header=0, encoding="utf-8", engine="python")
         except:
-            df = pd.read_csv(results_csv, header=None, engine="python")
+            df = pd.read_csv(results_csv, header=0, engine="python")
         print(df)
-        results = df[[0, 1, 2, 3, 4, 5]]
+        results = df[['sid', 'stims', 'input_sentence', 'answer', 'output_words', 'output_scores']]
         # [sid, keyword, input_sentence, answer, association_words, association_score]
         # 1...キーワード,
         # 2...入力文の番号,
@@ -415,9 +420,10 @@ class BertAssociation():
 
 
     # analysis_result_matchで使用する書き込み関数
-    def write_csv_match(self, result_csv, csv_file):
+    def write_csv_match(self, header, result_csv, csv_file):
         with open(csv_file, 'w', newline="",  encoding="utf-8") as f:
             writer = csv.writer(f)
+            writer.writerow(header)
             writer.writerows(result_csv)
 
 
@@ -474,13 +480,15 @@ class BertAssociation():
                 result_tmp = i, result[2], result[3], result[4], human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
-        self.write_csv_match(result_match, output_csv)
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
+
+        self.write_csv_match(header=header_results, result_csv=result_match, csv_file=output_csv)
 
 
     # スコアを算出する
     def analysis_analysis_result_match(self, results_csv, output_csv):
-        df = pd.read_csv(results_csv, header=None, engine="python")
-        results = df[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        df = pd.read_csv(results_csv, header=0, engine="python")
+        results = df[['sid', 'stims', 'input_sentence', 'answer', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']]
 
         # 1...通し番号,         
         # 2...連想文の番号,
