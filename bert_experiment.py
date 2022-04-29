@@ -76,7 +76,7 @@ class BertAssociation():
         results_attention_and_raw = []
         # 複数→1つバージョンでは、answerは正解の連想語、keywordsは刺激語のリストのリスト
         # (謝罪) 1つ→複数の頃の名残でanswerという変数名だけど、複数→1つでは正解の連想語が入ります...
-        for j, (answer, keywords) in self.dict_keywords.items():
+        for j, (answer, keywords) in enumerate(self.dict_keywords.items()):
             if self.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
