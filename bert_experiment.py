@@ -471,7 +471,7 @@ class BertAssociation():
                     if j % bert_interval == bert_interval-1:
                         not_bert_and_human_num.append(len(not_bert_and_human_word))
 
-                result_tmp = i, result[1], result[2], result[3], result[4], human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                result_tmp = i, result[2], result[3], result[4], human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
         self.write_csv_match(result_match, output_csv)
@@ -480,11 +480,11 @@ class BertAssociation():
     # スコアを算出する
     def analysis_analysis_result_match(self, results_csv, output_csv):
         df = pd.read_csv(results_csv, header=None, engine="python")
-        results = df[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
+        results = df[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]
 
-        # 1...通し番号,
-        # 3...キーワード,
+        # 1...通し番号,         
         # 2...連想文の番号,
+        # 3...キーワード,
         # 4...連想文,
         # another_flag == 293
         # 5...人間の連想するはずの単語
@@ -528,8 +528,8 @@ class BertAssociation():
 
                                 # 刺激語を複数表記する場合は、result[2]で判断できる
                                 # 解答はresult[5]で判断できる
-                                keyword = ast.literal_eval(result[5])[0]
-                                human_words_rank = int(result[6])
+                                keyword = ast.literal_eval(result[4])[0]
+                                human_words_rank = int(result[5])
                                 if keyword in word_num_dict.keys():
                                     if self.args.eval_flag == "MRR":
                                         if human_words_rank == 0:
