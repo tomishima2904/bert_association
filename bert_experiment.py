@@ -435,14 +435,14 @@ class BertAssociation():
         result_match = []
         for i, result in enumerate(results.itertuples()):
             if self.args.another_analysis == 293:
-                human_words = ast.literal_eval(result[4])
+                human_words = ast.literal_eval(result.answer)
 
                 for l, human_word in enumerate(human_words):
                     human_words[l] = ''.join([k for k in human_word if not k.isdigit()])
 
                 # 出力された単語とスコアのリスト
-                result_str_to_list_words = ast.literal_eval(result[5])
-                result_str_to_list_score = ast.literal_eval(result[6])
+                result_str_to_list_words = ast.literal_eval(result.output_words)
+                result_str_to_list_score = ast.literal_eval(result.output_scores)
 
                 # 人間の連想語と一致した単語とそのスコア
                 bert_and_human_word = []
@@ -477,7 +477,7 @@ class BertAssociation():
                     if j % bert_interval == bert_interval-1:
                         not_bert_and_human_num.append(len(not_bert_and_human_word))
 
-                result_tmp = i, result[2], result[3], result[4], human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                result_tmp = i, result.stims, result.input_sentence, result.answer, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
         header_results = ['sid', 'stims', 'input_sentence', 'answer', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
@@ -492,7 +492,7 @@ class BertAssociation():
 
         # 1...通し番号,         
         # 2...連想文の番号,
-        # 3...キーワード,
+        # 3...キーワード(stims),
         # 4...連想文,
         # another_flag == 293
         # 5...人間の連想するはずの単語
@@ -532,12 +532,12 @@ class BertAssociation():
                                     pass
                         # 最終的に割った後の数を全部足すことでスコアとなる.
                         for i, result in enumerate(results.itertuples()):
-                            if result[3] in rensoubun_number:
+                            if result.sid in rensoubun_number:
 
                                 # 刺激語を複数表記する場合は、result[2]で判断できる
                                 # 解答はresult[5]で判断できる
-                                keyword = ast.literal_eval(result[4])[0]
-                                human_words_rank = int(result[5])
+                                keyword = ast.literal_eval(result.stims)[0]
+                                human_words_rank = int(result.rank)
                                 if keyword in word_num_dict.keys():
                                     if self.args.eval_flag == "MRR":
                                         if human_words_rank == 0:
