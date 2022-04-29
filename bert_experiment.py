@@ -120,8 +120,8 @@ class BertAssociation():
 
                     # 結果を保存する
                     if self.multi_stims_flag:
-                        result_list = [keywords, sid, input_sentence, human_words, association_words, association_score]
-                        result_list_attentions_and_raws = [keywords, sid, input_sentence, human_words, attention_result, association_words_raw, association_score_raw]
+                        result_list = [sid, keywords, input_sentence, human_words, association_words, association_score]
+                        result_list_attentions_and_raws = [sid, keywords, input_sentence, human_words, attention_result, association_words_raw, association_score_raw]
                     else:
                         pass
 
@@ -404,7 +404,7 @@ class BertAssociation():
             df = pd.read_csv(results_csv, header=None, engine="python")
         print(df)
         results = df[[0, 1, 2, 3, 4, 5]]
-        # [keyword, i, input_sentence, answer, association_words, association_score]
+        # [sid, keyword, input_sentence, answer, association_words, association_score]
         # 1...キーワード,
         # 2...入力文の番号,
         # 3...入力文,
@@ -483,8 +483,8 @@ class BertAssociation():
         results = df[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
 
         # 1...通し番号,
-        # 2...キーワード,
-        # 3...連想文の番号,
+        # 3...キーワード,
+        # 2...連想文の番号,
         # 4...連想文,
         # another_flag == 293
         # 5...人間の連想するはずの単語
