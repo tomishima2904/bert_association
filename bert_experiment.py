@@ -425,29 +425,8 @@ if __name__ == '__main__':
 
     # 分析バージョン
     # analysis_version = "human5_nayose_disred_output_nayose"
-
-    # この処理に共通する保存パス
-    t_delta = datetime.timedelta(hours=9)
-    JST = datetime.timezone(t_delta, 'JST')
-    now = datetime.datetime.now(JST)
-    date_time = now.strftime('%y%m%d_%H%M%S')
-
-    # 出力するディレクトリ名を決めるための処理
-    if args.brackets_flag: brackets = "brkt"
-    else: brackets = "WObrkt"
-
-    if args.another_analysis == 293: another_name = "anl"
-    else: another_name = "WOanl"
-
-    if args.multi_stims_flag: stims_name = "stims{}".format(args.num_stims)
-    else: stims_name = "WOstims"
-
-    if args.category_flag: cat_name = "cat"
-    else: cat_name = "WOcat"
-
-    # save_dir_name = (date_time, args.max_words, brackets, another_name, args.model_opt, stims_name, cat_name, args.extract_noun_opt, args.eval_opt)
-
-    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}/"
+    
+    save_dir = dir_name_getter(args)
     os.makedirs(save_dir, exist_ok=True)
 
     results_csv = save_dir + "result.csv"
