@@ -168,7 +168,25 @@ class Analyzer(object):
                                 ana_ana_hukusuu(dict_keywords=self.dict_keywords, kankei=self.kankei, kan=kan, rank_p=p)
 
 
-    
+    def hits_at_k(self, results_dir, target_ranks:list):
+        
+        results = pd.read_csv(f"{results_dir}analysis.csv", header=0, engine="python")   
+        total_sentences = len(results)
+        header = ['k', 'hits@k', 'hits_num']
+        all_k_resutlts = []
+
+        for at_most_k in target_ranks:
+          masked_rank_at_k = [result_row.rank <= at_most_k and result_row.rank != 0 for result_row in results.itertuples()]
+          total_num_within_k = sum(masked_rank_at_k)
+          hits_ratio = total_num_within_k/total_sentences
+          all_k_resutlts.append([at_most_k, hits_ratio, total_num_within_k])
+
+        print(all_k_resutlts)
+        output_file = f"{results_dir}hits_at_k.csv"
+        csv_writer(header=header, result=all_k_resutlts, csv_file_path=output_file)
+        
+
+
 
 
 
@@ -193,4 +211,9 @@ if __name__ == '__main__':
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
     parser.add_argument('--mecab_path', default="-d /usr/local/lib/python3.6/site-packages/ipadic/dicdir -r /usr/local/lib/python3.6/site-packages/ipadic/dicdir/mecabrc", type=str, help='path where mecab is')
+    parser.add_argument('--get_date', default=None, help='date_time for hits@k')
     args = parser.parse_args()
+
+    analysis = Analyzer(args)
+    results_dir = dir_name_getter(args, get_date=args.get_date)
+    analysis.hits_at_k(results_dir=results_dir, target_ranks=args.ps)
