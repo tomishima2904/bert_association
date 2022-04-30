@@ -130,20 +130,14 @@ class BertAssociation():
                     results.append(result_list)
                     results_attention_and_raw.append(result_list_attentions_and_raws)
 
-        heaser_results = ['sid', 'stims', 'input_sentence', 'answer', 'output_words', 'output_scores']       
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'output_words', 'output_scores']       
         header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'answer', 'analyzed_attn', 'output_raw_words', 'output_raw_scores']
 
         # 結果を書き出す
-        with open(results_csv, 'w', newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(heaser_results)
-            writer.writerows(results)
+        csv_writer(header=header_results, result=results, csv_file_path=results_csv)        
 
         # Attentionを書き出す
-        with open(results_csv_attention, 'w', newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(header_attns_and_raws)
-            writer.writerows(results_attention_and_raw)
+        csv_writer(header=header_attns_and_raws, result=results_attention_and_raw, csv_file_path=results_csv_attention)
 
 
     # 刺激語を入力文に変換する
