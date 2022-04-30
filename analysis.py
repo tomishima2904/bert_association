@@ -82,18 +82,7 @@ class Analyzer(object):
 
   # スコアを算出する
   def analysis_analysis_result_match(self, results_csv, output_csv):
-      df = pd.read_csv(results_csv, header=0, engine="python")
-      results = df[['sid', 'stims', 'input_sentence', 'answer', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']]
-
-      # 1...通し番号,         
-      # 2...連想文の番号,
-      # 3...キーワード(stims),
-      # 4...連想文,
-      # another_flag == 293
-      # 5...人間の連想するはずの単語
-      # 6...人間の連想した単語の順位
-      # 7...人間と出力が一致した単語
-      # 8...人間と出力が一致した単語のスコア,
+      results = pd.read_csv(results_csv, header=0, engine="python")      
 
       # 連想文の組み合わせ
       if self.args.multi_stims_flag:
