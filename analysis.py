@@ -79,7 +79,7 @@ class Analyzer(object):
                 result_tmp = i, result.stims, result.input_sentence, result.answer, category, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
-        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'ranks', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
 
         csv_writer(header=header_results, result=result_match, csv_file_path=output_csv)
 
@@ -125,7 +125,7 @@ class Analyzer(object):
                                 # 刺激語を複数表記する場合は、result[2]で判断できる
                                 # 解答はresult[5]で判断できる
                                 keyword = ast.literal_eval(result.stims)[0]
-                                human_words_rank = int(result.rank)
+                                human_words_rank = int(result.ranks)
                                 if keyword in word_num_dict.keys():
                                     if self.args.eval_flag == "MRR":
                                         if human_words_rank == 0:
@@ -171,16 +171,31 @@ class Analyzer(object):
 
     def hits_at_k(self, results_dir, target_ranks:list):
         
-        results = pd.read_csv(f"{results_dir}analysis.csv", header=0, engine="python")   
+        results = pd.read_csv(f"{results_dir}analysis.csv", header=0, engine="python", encoding='utf-8')   
         total_sentences = len(results)
-        header = ['k', 'hits@k', 'hits_num']
+        header = ['k', f'hits@k({total_sentences})', 'hits_num']
         all_k_resutlts = []
+        category_list = list(set(results.category.tolist()))
+        category_list.sort()
+        for i, at_most_k in enumerate(target_ranks):
+            masked_rank_at_k = [result_row.ranks <= at_most_k and result_row.ranks != 0 for result_row in results.itertuples()]
+            total_num_within_k = sum(masked_rank_at_k)
+            hits_ratio = total_num_within_k/total_sentences
+            hits_k_results = [at_most_k, hits_ratio, total_num_within_k]          
 
-        for at_most_k in target_ranks:
-          masked_rank_at_k = [result_row.rank <= at_most_k and result_row.rank != 0 for result_row in results.itertuples()]
-          total_num_within_k = sum(masked_rank_at_k)
-          hits_ratio = total_num_within_k/total_sentences
-          all_k_resutlts.append([at_most_k, hits_ratio, total_num_within_k])
+            for category in category_list:
+                specifical_df = results[results['category'] == category]
+                specifical_total_sentences = len(specifical_df)
+                specifical_masked_rank_at_k = [spe_row.ranks <= at_most_k and spe_row.ranks != 0 for spe_row in specifical_df.itertuples()]
+                specifical_total_num_within_k = sum(specifical_masked_rank_at_k)
+                specifical_hits_ratio = specifical_total_num_within_k/specifical_total_sentences
+                hits_k_results.append(specifical_hits_ratio)
+
+                if i == 0: 
+                    spe_header = f'{category}({specifical_total_num_within_k})'
+                    header.append(spe_header)
+
+            all_k_resutlts.append(hits_k_results)
 
         print(all_k_resutlts)
         output_file = f"{results_dir}hits_at_k.csv"
