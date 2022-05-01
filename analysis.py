@@ -75,10 +75,11 @@ class Analyzer(object):
                     if j % bert_interval == bert_interval-1:
                         not_bert_and_human_num.append(len(not_bert_and_human_word))
 
-                result_tmp = i, result.stims, result.input_sentence, result.answer, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                category = self.toigo[ast.literal_eval(result.answer)[0]]
+                result_tmp = i, result.stims, result.input_sentence, result.answer, category, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
-        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'rank', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
 
         csv_writer(header=header_results, result=result_match, csv_file_path=output_csv)
 
