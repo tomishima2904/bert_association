@@ -192,7 +192,7 @@ class Analyzer(object):
                 hits_k_results.append(specifical_hits_ratio)
 
                 if i == 0: 
-                    spe_header = f'{category}({specifical_total_num_within_k})'
+                    spe_header = f'{category}({specifical_total_sentences})'
                     header.append(spe_header)
 
             all_k_resutlts.append(hits_k_results)
