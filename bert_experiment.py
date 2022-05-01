@@ -445,3 +445,4 @@ if __name__ == '__main__':
         if args.another_analysis == 0 or args.another_analysis == 293:
             analyzer.analysis_result_match_nayose(results_csv=results_csv, output_csv=output1_csv, bert_interval=1)
             analyzer.analysis_analysis_result_match(results_csv=output1_csv, output_csv=output2_csv)
+            analyzer.hits_at_k(results_dir=save_dir, target_ranks=args.ps)
