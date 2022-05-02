@@ -133,7 +133,7 @@ class BertAssociation():
                     results_attention_and_raw.append(result_list_attentions_and_raws)
 
         header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'output_words', 'output_scores']       
-        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'tokenized_sentence', 'answer', 'category', 'analyzed_attn', 'output_raw_words', 'output_raw_scores']
+        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'tokenized_sentence', 'answer', 'category', 'attn_weights_of_mask', 'output_raw_words', 'output_raw_scores']
 
         # 結果を書き出す
         csv_writer(header=header_results, result=results, csv_file_path=results_csv)        
@@ -296,10 +296,20 @@ class BertAssociation():
     # attentionsの分析を行う関数(途中なので、ここを改造してほしい)
     def analysis_attentions(self, attentions, tokenized_text, masked_index, human_words):
         if self.multi_stims_flag:
+            attention_result = []
             # 分析対象のTransformer層(-1は最終層、この数値はconfigで変更できるようにした方がいい)
-            transformer_layers = [self.args.target_layer]
+            transformer_layer = attentions[self.args.target_layer]
             # Attention_Headの数(本当はBERTのconfig.jsonを参照した方がいい)
             attention_head_num = 12
+            if self.args.target_attn_head == None:
+                for head in range(attention_head_num):
+                    attn_of_mask = transformer_layer[0][head][masked_index[0]]
+                    attention_result.append(attn_of_mask.numpy().tolist())
+
+            else:
+                attn_of_mask = transformer_layer[0][self.args.target_attn_head][masked_index[0]]
+                attention_result.append(attn_of_mask.numpy().tolist())
+
             """
                 transformer_layer番目の層を取り出す
                 attentions[transformer_layer]
@@ -310,7 +320,6 @@ class BertAssociation():
                 maskからの該当単語へのattentionを取り出す
                 attentions[transformer_layer][0][attention_head][masked_index][word_index]
             """
-            attention_result = None
             return attention_result
 
 
@@ -420,6 +429,7 @@ if __name__ == '__main__':
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
     parser.add_argument('--dict_mecab', default='ipadic', type=str, help='[unidic_lite, unidic, ipadic]')
+    parser.add_argument('--target_attn_head', default=None, help='All attention heads if None')
     args = parser.parse_args()
 
     # bert_associationをインスタンス化
