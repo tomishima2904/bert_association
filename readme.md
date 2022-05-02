@@ -11,12 +11,13 @@ python bert_experiment.py \
 	--output_nayose_flag=True \
 	--extract_noun_opt='mecab' \
 	--multi_stims_flag=True \
-	--category_flag=False \
+	--category_flag=True \
 	--num_stims=5 \
 	--eval_opt='p' \
 	--dataset='extract_keywordslist' \
 	--max_words=150 \
-	--target_layer=-1 
+	--target_layer=-1 \
+	--dict_mecab='unidic_lite'
 ```               
 3. result内に結果が出力される
 
