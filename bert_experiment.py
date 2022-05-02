@@ -123,7 +123,9 @@ class BertAssociation():
                     # 結果を保存する
                     if self.multi_stims_flag:
                         result_list = [sid, keywords, input_sentence, human_words, self.toigo[human_words[0]], association_words, association_score]
-                        result_list_attentions_and_raws = [sid, keywords, input_sentence, human_words, self.toigo[human_words[0]], attention_result, association_words_raw, association_score_raw]
+                        tokenized_text = self.tokenizer.tokenize(input_sentence)
+                        tokenized_sentence, _ = utils_tools.transform_tokenized_text_mecab_tohoku(tokenized_text=tokenized_text)                        
+                        result_list_attentions_and_raws = [sid, keywords, input_sentence, tokenized_sentence, human_words, self.toigo[human_words[0]], attention_result, association_words_raw, association_score_raw]
                     else:
                         pass
 
@@ -131,7 +133,7 @@ class BertAssociation():
                     results_attention_and_raw.append(result_list_attentions_and_raws)
 
         header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'output_words', 'output_scores']       
-        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'analyzed_attn', 'output_raw_words', 'output_raw_scores']
+        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'tokenized_sentence', 'answer', 'category', 'analyzed_attn', 'output_raw_words', 'output_raw_scores']
 
         # 結果を書き出す
         csv_writer(header=header_results, result=results, csv_file_path=results_csv)        
