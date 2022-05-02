@@ -44,7 +44,7 @@ class BertAssociation():
         self.extract_noun_opt = args.extract_noun_opt
 
         # 名詞判定で使用するmecabの設定(環境に合わせて設定してね。これは相馬のローカル環境の例)
-        mecab_option = args.mecab_path
+        mecab_option = f"-d /usr/local/lib/python3.6/site-packages/{self.args.dict_mecab}/dicdir -r /usr/local/lib/python3.6/site-packages/{self.args.dict_mecab}/dicdir/mecabrc"
 
         if self.framework_opt == "tf":
             print(tf.__version__)
@@ -419,7 +419,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
-    parser.add_argument('--mecab_path', default="-d /usr/local/lib/python3.6/site-packages/ipadic/dicdir -r /usr/local/lib/python3.6/site-packages/ipadic/dicdir/mecabrc", type=str, help='path where mecab is')
+    parser.add_argument('--dict_mecab', default='unidic_lite', type=str, help='[unidic_lite, unidic, ipadic]')
     args = parser.parse_args()
 
     # bert_associationをインスタンス化
