@@ -419,7 +419,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
-    parser.add_argument('--dict_mecab', default='unidic_lite', type=str, help='[unidic_lite, unidic, ipadic]')
+    parser.add_argument('--dict_mecab', default='ipadic', type=str, help='[unidic_lite, unidic, ipadic]')
     args = parser.parse_args()
 
     # bert_associationをインスタンス化

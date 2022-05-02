@@ -17,7 +17,7 @@ python bert_experiment.py \
 	--dataset='extract_keywordslist' \
 	--max_words=150 \
 	--target_layer=-1 \
-	--dict_mecab='unidic_lite'
+	--dict_mecab='ipadic'
 ```               
 3. result内に結果が出力される
 
