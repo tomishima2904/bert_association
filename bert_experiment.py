@@ -11,13 +11,14 @@ import argparse
 import datetime
 import io,sys
 from distutils.util import strtobool
-from analysis import Analyzer
-from file_handler import *
 
 # 自作ファイルからのインポート
+sys.path.append('.')
 from extract_hukusuu import SearchFromHukusuuSigeki
 import utils_tools
 from models import Model
+from analysis import Analyzer
+from file_handler import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
@@ -44,7 +45,7 @@ class BertAssociation():
         self.extract_noun_opt = args.extract_noun_opt
 
         # 名詞判定で使用するmecabの設定(環境に合わせて設定してね。これは相馬のローカル環境の例)
-        mecab_option = f"-d /usr/local/lib/python3.6/site-packages/{self.args.dict_mecab}/dicdir -r /usr/local/lib/python3.6/site-packages/{self.args.dict_mecab}/dicdir/mecabrc"
+        mecab_option = f"-d {self.args.packages_path}/{self.args.dict_mecab}/dicdir -r {self.args.packages_path}/{self.args.dict_mecab}/dicdir/mecabrc"
 
         if self.framework_opt == "tf":
             print(tf.__version__)
@@ -428,6 +429,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
     parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
     parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
+    parser.add_argument('--packages_path', default='/home/tomishima2904/.local/lib/python3.6/site-packages', type=str, help='path where packages exist')
     parser.add_argument('--dict_mecab', default='ipadic', type=str, help='[unidic_lite, unidic, ipadic]')
     parser.add_argument('--target_attn_head', default=None, help='All attention heads if None')
     args = parser.parse_args()

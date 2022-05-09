@@ -1,10 +1,11 @@
 import csv
 import ast
-import os
+import os, sys
 import pandas as pd
 import argparse
 from distutils.util import strtobool
 
+sys.path.append('.')
 from file_handler import *
 from extract_hukusuu import SearchFromHukusuuSigeki
 
