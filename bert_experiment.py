@@ -443,11 +443,11 @@ if __name__ == '__main__':
     save_dir = dir_name_getter(args)
     os.makedirs(save_dir, exist_ok=True)
 
-    results_csv = save_dir + "result.csv"
-    results_csv_attention = save_dir + "result_attentions_and_raws.csv"
+    results_csv = save_dir + "/result.csv"
+    results_csv_attention = save_dir + "/result_attentions_and_raws.csv"
 
-    output1_csv = save_dir + "analysis.csv"
-    output2_csv = save_dir + "analysis_analysis.csv"
+    output1_csv = save_dir + "/analysis.csv"
+    output2_csv = save_dir + "/analysis_analysis.csv"
 
     # 単語を出力する
     if args.output_words_from_bert:

@@ -47,5 +47,5 @@ def dir_name_getter(args, get_date=None):
     if args.category_flag: cat_name = "cat"
     else: cat_name = "WOcat"
 
-    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{args.dict_mecab}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}/"      
+    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{args.dict_mecab}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}"      
     return save_dir

@@ -199,7 +199,7 @@ class Analyzer(object):
             all_k_resutlts.append(hits_k_results)
 
         print(all_k_resutlts)
-        output_file = f"{results_dir}hits_at_k.csv"
+        output_file = f"{results_dir}/hits_at_k.csv"
         csv_writer(header=header, result=all_k_resutlts, csv_file_path=output_file)
         
 
