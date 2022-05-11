@@ -11,7 +11,7 @@ def csv_results_reader(results_csv):
       df = pd.read_csv(results_csv, header=0, encoding="utf-8", engine="python")
   except:
       df = pd.read_csv(results_csv, header=0, engine="python")
-  print(df)  
+  # print(df)  
   return df
 
 
