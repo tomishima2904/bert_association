@@ -171,7 +171,7 @@ class Analyzer(object):
 
     def hits_at_k(self, results_dir, target_ranks:list):
         
-        results = pd.read_csv(f"{results_dir}analysis.csv", header=0, engine="python", encoding='utf-8')   
+        results = pd.read_csv(f"{results_dir}/analysis.csv", header=0, engine="python", encoding='utf-8')   
         total_sentences = len(results)
         header = ['k', f'hits@k({total_sentences})', 'hits_num']
         all_k_resutlts = []

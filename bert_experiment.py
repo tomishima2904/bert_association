@@ -13,7 +13,7 @@ sys.path.append('.')
 from extract_hukusuu import SearchFromHukusuuSigeki
 import utils_tools
 from models import Model
-from analysis import Analyzer
+from analysis2 import Analyzer2
 from file_handler import *
 from config import args
 
@@ -431,8 +431,9 @@ if __name__ == '__main__':
 
     # 集計する
     if args.analysis_flag:
-        analyzer = Analyzer(args)
+        analyzer = Analyzer2(args)
         if args.another_analysis == 0 or args.another_analysis == 293:
             analyzer.analysis_result_match_nayose(results_csv=results_csv, output_csv=output1_csv, bert_interval=1)
             analyzer.analysis_analysis_result_match(results_csv=output1_csv, output_csv=output2_csv)
             analyzer.hits_at_k(results_dir=save_dir, target_ranks=args.ps)
+            analyzer.attention_visualizasion(save_dir)
