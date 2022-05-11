@@ -69,7 +69,7 @@ class Analyzer2(Analyzer):
 
         color_bar_attn = [i*0.05 for i in range(21)]
         color_bar_str = [f'{i:.2f}' for i in color_bar_attn]
-        color_bar = f'<p>color bar >>>{self._mk_html(color_bar_str, color_bar_attn)}<<< color bar<p/>\n'
+        color_bar = f'<p> >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <p/>\n'
         result_html = color_bar
 
         for sid, sentence, attns in zip(results.sid, tokenized_sentences, attnetion_weights):
