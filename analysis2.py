@@ -32,7 +32,7 @@ class Analyzer2(Analyzer):
         # tokenized_sentences = results.tokenized_sentence.to_list()
         all_heads_attns = results.attn_weights_of_mask
         converted_attns = []
-        if self.args.target_heads == None:
+        if -1 in self.args.target_heads:
             for attns in all_heads_attns:
                 attns = np.array(ast.literal_eval(attns))
                 if self.args.avg_flag:
@@ -45,14 +45,14 @@ class Analyzer2(Analyzer):
         else: 
             for attns in all_heads_attns:
                 attns = np.array(ast.literal_eval(attns))
-                bool_list = [head in self.args.target_heads for head in range(len(attns[0]))]
+                bool_list = [head in self.args.target_heads for head in range(12)]
                 target_attns = attns[bool_list]
                 if self.args.avg_flag:
                     averaged_attn = np.average(target_attns, axis=0)
                     averaged_attn = averaged_attn[np.newaxis, :]
                     converted_attns.append(averaged_attn)
                 else:
-                    converted_attns(target_attns)
+                    converted_attns.append(target_attns)
 
         return converted_attns
 
@@ -64,10 +64,17 @@ class Analyzer2(Analyzer):
         tokenized_sentences = results.tokenized_sentence
         tokenized_sentences = [ast.literal_eval(sentence) for sentence in tokenized_sentences]
         assert len(attnetion_weights) == len(results.tokenized_sentence)    
-        for sentence, attns in zip(tokenized_sentences, attnetion_weights):
+        for sid, sentence, attns in zip(results.sid, tokenized_sentences, attnetion_weights):
             assert len(sentence) == len(attns[0])
-            for attn in attns:
-                display(HTML(self._mk_html(sentence, attn)))
+            if self.args.avg_flag:
+                for attn in attns:
+                    display(HTML(f'{sid:3d}:' +self._mk_html(sentence, attn)))
+            else:
+                if self.args.target_heads == None: target_heads = [head for head in range(12)]
+                else: target_heads = self.args.target_heads
+                for head, attn in zip(target_heads, attns):
+                    display(HTML(f'{sid:3d}-{head:2d}:' + self._mk_html(sentence, attn)))
+                
 
 
 
