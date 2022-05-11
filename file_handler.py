@@ -49,3 +49,23 @@ def dir_name_getter(args, get_date=None):
 
     save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{another_name}_{args.model_opt}_{args.dict_mecab}_{stims_name}_{cat_name}_{args.extract_noun_opt}_{args.eval_opt}"      
     return save_dir
+
+
+def html_writer(body, result_dir:str, output_file:str):
+    result = f'''
+            <html>
+            <head>
+            <meta charset="utf-8">
+            <title>{result_dir}</title>
+            </head>
+            <body>
+            <h2>{result_dir}</h2>
+            {body} 
+            </body>
+            </html>
+        '''
+
+    save_file_name = f'{result_dir}/{output_file}.html'
+
+    with open(save_file_name, 'w', encoding='utf-8') as f:
+        f.write(result)
