@@ -13,7 +13,7 @@ parser.add_argument('--multi_stims_flag', default=True, type=strtobool, help='Ve
 parser.add_argument('--category_flag', default=True, type=strtobool, help='Using categorizing word or not')
 parser.add_argument('--num_stims', default=5, type=int, help='number of stimulating words')
 parser.add_argument('--eval_opt', default='p', type=str, help='[p, MRR]')
-parser.add_argument('--ps', default=[1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150], type=list, help='Specify ranks for analysis')
+parser.add_argument('--ps', nargs='*', default=[1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150], type=int, help='Specify ranks for analysis')
 parser.add_argument('--dataset', default='extract_keywordslist', type=str, help='dataset')
 parser.add_argument('--max_words', default=150, type=int, help='num of words from BERT')
 parser.add_argument('--another_analysis', default=293, type=int, help='Specify another method of analysis')
@@ -23,5 +23,5 @@ parser.add_argument('--dict_mecab', default='ipadic', type=str, help='[unidic_li
 
 parser.add_argument('--get_date', default=None, help='date_time for hits@k')
 parser.add_argument('--avg_flag', default=True, type=strtobool, help='averaging attn weights or not')
-parser.add_argument('--target_heads', default=None, help='Specify which attention heads to get')
+parser.add_argument('--target_heads', nargs='*', default=[-1], type=int, help='Specify which attention heads to get')
 args = parser.parse_args()
