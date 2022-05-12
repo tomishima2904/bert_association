@@ -18,14 +18,13 @@ class SearchFromHukusuuSigeki():
         self.results_nayose = {}
         self.results_toigo = {}
         self.results_kankei = {}
-        self.sigeki_num = None
+        self.sigeki_num = num_stims
 
         # キーワードと解答から dict型　を作成する
         for csv in self.path_keywords:
             # engine="python"を指定しないと動かない
             df = pd.read_csv(csv, encoding=encoding_type, engine="python")
-            for row in df.itertuples():
-                self.sigeki_num = num_stims
+            for row in df.itertuples():                
                 key = row.answer
                 words = []
                 for i in range(self.sigeki_num):
@@ -34,7 +33,7 @@ class SearchFromHukusuuSigeki():
 
                 for i in range(10):
                     if key in self.results.keys():
-                        key = key + "%s" % (i+2)
+                        key = key + f"{i+2}"  
 
                 self.results[key] = words
                 self.results_toigo[key] = row[-1]

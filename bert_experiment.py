@@ -158,12 +158,12 @@ class BertAssociation():
                 # MASKに鍵括弧「」を付けない場合
                 categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo
 
-            # %sは刺激語に置換する
+            # {stims}は刺激語に置換する
             for category, sentence_synonyms in categories_and_sentences.items():
                     if self.toigo[human_word] == category:
                         sentence_parts = []
                         for part in sentence_synonyms['sentence']:
-                            if part == "%s":
+                            if part == "{stims}":
                                 for i in range(self.args.num_stims):
                                     sentence_parts.append(keywords[i])
                                     if i == (self.args.num_stims - 1):
@@ -179,26 +179,26 @@ class BertAssociation():
         else:
             if self.args.brackets_flag:
                 # MASKに鍵括弧「」を付ける場合
-                sentences = utils_tools.hukusuu_sigeki_sentences_mask.items()
+                sentence = utils_tools.hukusuu_sigeki_sentences_mask
             else:
                 # MASKに鍵括弧「」を付けない場合
-                sentences = utils_tools.hukusuu_sigeki_sentences.items()
+                sentence = utils_tools.hukusuu_sigeki_sentences
 
-            # %sは刺激語に置換する
-            for category, sentence_synonyms in categories_and_sentences.items():
-                sentence_parts = []
-                for part in sentence_synonyms['sentence']:
-                    if part == "%s":
-                        for i in range(self.args.num_stims):
-                            sentence_parts.append(keywords[i])
-                            if i == (self.args.num_stims - 1):
-                                pass
-                            else:
-                                sentence_parts.append("、")
-                    else:
-                        sentence_parts.append(part)
-                sentence = ''.join(sentence_parts)
-                input_sentences.append(sentence)
+            # {stims}は刺激語に置換する
+
+            sentence_parts = []
+            for part in sentence:
+                if part == "{stims}":
+                    for i in range(self.args.num_stims):
+                        sentence_parts.append(keywords[i])
+                        if i == (self.args.num_stims - 1):
+                            pass
+                        else:
+                            sentence_parts.append("、")
+                else:
+                    sentence_parts.append(part)
+            sentence = ''.join(sentence_parts)
+            input_sentences.append(sentence)
 
         return input_sentences
 
