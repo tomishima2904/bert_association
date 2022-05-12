@@ -152,17 +152,17 @@ class BertAssociation():
         if self.category_flag:
             if self.args.brackets_flag:
                 # MASKに鍵括弧「」を付ける場合
-                sentencess = utils_tools.hukusuu_sigeki_sentences_toigo_mask.items()
+                categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo_mask
+
             else:
                 # MASKに鍵括弧「」を付けない場合
-                sentencess = utils_tools.hukusuu_sigeki_sentences_toigo.items()
+                categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo
 
             # %sは刺激語に置換する
-            for number, sentences in sentencess:
-                for toigo, parts in sentences.items():
-                    if self.toigo[human_word] == toigo:
+            for category, sentence_synonyms in categories_and_sentences.items():
+                    if self.toigo[human_word] == category:
                         sentence_parts = []
-                        for part in parts:
+                        for part in sentence_synonyms['sentence']:
                             if part == "%s":
                                 for i in range(self.args.num_stims):
                                     sentence_parts.append(keywords[i])
@@ -185,9 +185,9 @@ class BertAssociation():
                 sentences = utils_tools.hukusuu_sigeki_sentences.items()
 
             # %sは刺激語に置換する
-            for number, parts in sentences:
+            for category, sentence_synonyms in categories_and_sentences.items():
                 sentence_parts = []
-                for part in parts:
+                for part in sentence_synonyms['sentence']:
                     if part == "%s":
                         for i in range(self.args.num_stims):
                             sentence_parts.append(keywords[i])
