@@ -72,7 +72,7 @@ class Analyzer2(Analyzer):
         color_bar = f'<p> >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <p/>\n'
         result_html = color_bar
 
-        for sid, sentence, attns in zip(results.sid, tokenized_sentences, attnetion_weights):
+        for sid, sentence, attns, category, answer in zip(results.sid, tokenized_sentences, attnetion_weights, results.category, results.answer):
             assert len(sentence) == len(attns[0])
             if sid % 10 == 0 and sid != 0: result_html += color_bar
             if self.args.avg_flag:
@@ -86,7 +86,7 @@ class Analyzer2(Analyzer):
                     attn_output_html = f'{sid:3d}-{head:2d}:' + self._mk_html(sentence, attn)
 
             # display(HTML(attn_output_html))  # uncomment out to display on jupyter
-            tagged_attn_output_html = f'<p>{attn_output_html}</p>\n'
+            tagged_attn_output_html = f'<p>{attn_output_html} (c:{category}, a:{answer})</p>\n'
             result_html += tagged_attn_output_html            
 
         if self.args.avg_flag: output_file = 'visu_avg'
