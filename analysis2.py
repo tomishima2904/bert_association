@@ -3,6 +3,8 @@ import ast
 import os, sys
 import pandas as pd
 import numpy as np
+from scipy.special import softmax
+from sklearn import preprocessing
 from IPython.display import display, HTML
 
 sys.path.append('.')
@@ -70,11 +72,20 @@ class Analyzer2(Analyzer):
         color_bar_attn = [i*0.05 for i in range(21)]
         color_bar_str = [f'{i:.2f}' for i in color_bar_attn]
         color_bar = f'<p> >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <p/>\n'
+        displayed_color_bar_indices = [0]
         result_html = color_bar
 
         for sid, sentence, attns, category, answer in zip(results.sid, tokenized_sentences, attnetion_weights, results.category, results.answer):
             assert len(sentence) == len(attns[0])
-            if int(sid[:3]) % 10 == 0 and int(sid[:3]) != 0: result_html += color_bar
+            if not self.args.sep_flag:
+                del sentence[-1]
+                attns = [attn[:-1] for attn in attns]
+                # attns = softmax(attns, axis=1)  # normalize by softmax
+                attns = preprocessing.minmax_scale(attns, axis=1)
+                
+            if int(sid[:3]) % 10 == 0 and int(sid[:3]) not in displayed_color_bar_indices: 
+                result_html += color_bar
+                displayed_color_bar_indices.append(int(sid[:3]))
             if self.args.avg_flag:
                 for attn in attns:
                     attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
@@ -89,8 +100,11 @@ class Analyzer2(Analyzer):
             tagged_attn_output_html = f'<p>{attn_output_html} (c:{category}, a:{answer})</p>\n'
             result_html += tagged_attn_output_html            
 
-        if self.args.avg_flag: output_file = 'visu_avg'
-        else: output_file = 'visu_raw'
+        if self.args.avg_flag: avg_name = 'avg'
+        else: 'raw'
+        if self.args.sep_flag: sep_name = 'sep'
+        else: sep_name = 'WOsep'
+        output_file = f'visu_{avg_name}_{sep_name}'
         html_writer(body=result_html, result_dir=results_csv, output_file=output_file)
         
 
