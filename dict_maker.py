@@ -1,7 +1,6 @@
-# coding: utf-8
-
 import glob
 import pandas as pd
+import ast
 
 
 class SearchFromHukusuuSigeki():
@@ -24,19 +23,11 @@ class SearchFromHukusuuSigeki():
         for csv in self.path_keywords:
             # engine="python"を指定しないと動かない
             df = pd.read_csv(csv, encoding=encoding_type, engine="python")
-            for row in df.itertuples():                
-                key = row.answer
-                words = []
-                for i in range(self.sigeki_num):
-                    word = row[i+2]
-                    words.append(word)
-
-                for i in range(10):
-                    if key in self.results.keys():
-                        key = key + f"{i+2}"  
-
-                self.results[key] = words
-                self.results_toigo[key] = row[-1]
+            df_idx_list = [i for i in range(len(df))]
+            for idx, row in zip(df_idx_list, df.itertuples()):
+                v_row = {'answer': row.answer, 'stims': ast.literal_eval(row.stims), 'category': row.category}
+                self.results[idx] = v_row                
+                # self.results_toigo[key] = row[-1]
                 # self.results_kankei[key] = row[-1]
 
         # paraphrase.csv から dict型 を作成する
@@ -86,8 +77,8 @@ class SearchFromHukusuuSigeki():
     def get_keywords(self):
         return self.results.keys()
 
-    def get_toigo(self):
-        return self.results_toigo
+    # def get_toigo(self):
+    #    return self.results_toigo
 
     def get_kankei(self):
         return self.results_kankei
