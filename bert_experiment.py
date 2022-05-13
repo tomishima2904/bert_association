@@ -177,18 +177,11 @@ class BertAssociation():
         if self.category_flag:
             # {stims}は刺激語に置換する
             base_sentence = self.categories_and_sentences[values['category']]
-            # for category, sentence_synonyms in categories_and_sentences.items():
-            #    if self.toigo[human_word] == category:
             if len(base_sentence['synonyms']) == 0:                    
                 sentence_parts = []
                 for part in base_sentence['sentence']:
                     if part == "{stims}":
-                        for i in range(self.args.num_stims):
-                            sentence_parts.append(values['stims'][i])
-                            if i == (self.args.num_stims - 1):
-                                pass
-                            else:
-                                sentence_parts.append("、")
+                        sentence_parts.append('、'.join(values['stims']))                        
                     else:
                         sentence_parts.append(part)
                 category_synonyms.append(values['category'])
@@ -199,13 +192,7 @@ class BertAssociation():
                     sentence_parts = []
                     for part in base_sentence['sentence']:
                         if part == "{stims}":
-                            for i in range(self.args.num_stims):
-                                sentence_parts.append(values['stims'][i])
-                                if i == (self.args.num_stims - 1):
-                                    pass
-                                else:
-                                    sentence_parts.append("、")
-
+                            sentence_parts.append('、'.join(values['stims']))                            
                         elif part == '{cat}':
                             sentence_parts.append(synonym)
                         else:
@@ -224,12 +211,7 @@ class BertAssociation():
             sentence_parts = []
             for part in self.base_sentence:
                 if part == "{stims}":
-                    for i in range(self.args.num_stims):
-                        sentence_parts.append(values['stims'][i])
-                        if i == (self.args.num_stims - 1):
-                            pass
-                        else:
-                            sentence_parts.append("、")
+                    sentence_parts.append('、'.join(values['stims']))                    
                 else:
                     sentence_parts.append(part)
             sentence = ''.join(sentence_parts)
