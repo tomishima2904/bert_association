@@ -3,22 +3,23 @@
 2. bert_experiment.pyを実行する
 ```
 python bert_experiment.py \
-	--output_words_from_bert=True \
 	--analysis_flag=True \
-	--framework_opt='tf' \
-	--model_opt='cl-tohoku' \
+	--avg_flag=True \
 	--brackets_flag=True \
-	--output_nayose_flag=True \
+	--dataset='extract_keywordslist' \
+	--dict_mecab='ipadic' \
+	--eval_opt='p' \
 	--extract_noun_opt='mecab' \
+	--framework_opt='tf' \
+	--max_words=150 \
+	--model_opt='cl-tohoku' \
 	--multi_stims_flag=True \
 	--num_stims=5 \
-	--eval_opt='p' \
-	--dataset='extract_keywordslist' \
-	--max_words=150 \
-	--dict_mecab='ipadic' \
-	--target_layer=-1 \
+	--output_nayose_flag=True \
+	--output_words_from_bert=True \
+	--sep_flag='f' \
 	--target_heads -1 \
-	--avg_flag=True \
+	--target_layer=-1 \
 	--category_flag='t'
 ```               
 - flag系は`True`や`t`もしくは`False`や`f`で選択
