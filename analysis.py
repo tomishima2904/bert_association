@@ -6,7 +6,7 @@ import pandas as pd
 
 sys.path.append('.')
 from file_handler import *
-from extract_hukusuu import SearchFromHukusuuSigeki
+from dict_maker import SearchFromHukusuuSigeki
 from config import args
 
 
@@ -21,7 +21,7 @@ class Analyzer(object):
             # 複数の刺激語バージョンにおける、正解と不正解のリスト
             self.dict_keywords = self.hukusuu_sigeki.get_dict()
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
-            self.toigo = self.hukusuu_sigeki.get_toigo()
+            # self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()
         else:
             pass
@@ -76,8 +76,8 @@ class Analyzer(object):
                     if j % bert_interval == bert_interval-1:
                         not_bert_and_human_num.append(len(not_bert_and_human_word))
 
-                category = self.toigo[ast.literal_eval(result.answer)[0]]
-                result_tmp = result.sid, result.stims, result.input_sentence, result.answer, category, result.category_synonyms, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                # category = self.toigo[ast.literal_eval(result.answer)[0]]
+                result_tmp = result.sid, result.stims, result.input_sentence, result.answer, result.category, result.category_synonyms, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
         header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'ranks', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
@@ -85,7 +85,7 @@ class Analyzer(object):
         csv_writer(header=header_results, result=result_match, csv_file_path=output_csv)
 
 
-    # スコアを算出する
+    # スコアを算出する  # Not working!!!!
     def analysis_analysis_result_match(self, results_csv, output_csv):
         results = pd.read_csv(results_csv, header=0, engine="python")      
 

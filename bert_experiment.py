@@ -10,7 +10,7 @@ import io,sys
 
 # 自作ファイルからのインポート
 sys.path.append('.')
-from extract_hukusuu import SearchFromHukusuuSigeki
+from dict_maker import SearchFromHukusuuSigeki
 import utils_tools
 from models import Model
 from analysis2 import Analyzer2
@@ -63,7 +63,7 @@ class BertAssociation():
             # 複数の刺激語バージョンにおける、採用する刺激語の数
             self.num_stims = args.num_stims
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
-            self.toigo = self.hukusuu_sigeki.get_toigo()
+            # self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()
         else:
             pass
@@ -76,14 +76,14 @@ class BertAssociation():
         results_attention_and_raw = []
         # 複数→1つバージョンでは、answerは正解の連想語、keywordsは刺激語のリストのリスト
         # (謝罪) 1つ→複数の頃の名残でanswerという変数名だけど、複数→1つでは正解の連想語が入ります...
-        for sid, (answer, keywords) in enumerate(self.dict_keywords.items()):
+        for sid, values in self.dict_keywords.items():
             if self.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
                 if self.category_flag: 
-                    input_sentences, category_synonyms = self.keywords_to_sentences(keywords=keywords, human_word=answer)                    
+                    input_sentences, category_synonyms = self._keywords_to_sentences(values=values)                    
                 else: 
-                    input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=answer)
+                    input_sentences = self._keywords_to_sentences(values=values)
                     category_synonyms = [0]*len(input_sentences)
                 
             else:
@@ -94,7 +94,7 @@ class BertAssociation():
                 # 相馬が決定した87題の中には、同じ正解語が含まれる(例：魚)ので、
                 # 辞書のキーが魚、魚_2、魚_2_3のようになっている
                 # 正解を判定する際には「_2」や「_2_3」は取り除かれる
-                human_words = [answer]
+                human_words = [values['answer']]
             else:
                 pass
             print(input_sentences)
@@ -111,27 +111,27 @@ class BertAssociation():
                 # ここのfor文で出力単語そのままではなく、刺激語を除いたり名詞だけ抽出したりする
                 for association_words_raw, association_score_raw in zip(association_words_raws, association_score_raws):
                     # 出力単語のうち、名詞だけ抽出する
-                    association_words, association_score, extract_num = self.extract_noun_from_output(association_words_raw, association_score_raw)
+                    association_words, association_score, extract_num = self._extract_noun_from_output(association_words_raw, association_score_raw)
 
                     # 刺激語を除く
                     if self.multi_stims_flag:
-                        for keyword in keywords:
-                            association_words, association_score, extract_num = self.extract_paraphrase_from_output(keyword, human_words, association_words, association_score)
+                        for stim in values['stims']:
+                            association_words, association_score, extract_num = self._extract_paraphrase_from_output(stim, values['category'], association_words, association_score)
                     else:
                         pass
 
                     # 出力単語のうち、同じ単語を除く(名寄せ)
                     if self.args.output_nayose_flag:
-                        association_words, association_score, extract_num = self.nayose_from_output(association_words, association_score)
+                        association_words, association_score, extract_num = self._nayose_from_output(association_words, association_score)
 
                     # 結果を保存する
                     if self.multi_stims_flag:
                         if self.category_flag: sentence_id = f'{sid:0>3}-{i:0>2}'
                         else: sentence_id = f'{sid:0>3}-'
-                        result_list = [sentence_id, keywords, input_sentence, human_words, self.toigo[human_words[0]], category_synonyms[i], association_words, association_score]
+                        result_list = [sentence_id, values['stims'], input_sentence, human_words, values['category'], category_synonyms[i], association_words, association_score]
                         tokenized_text = self.tokenizer.tokenize(input_sentence)
                         tokenized_sentence, _ = utils_tools.transform_tokenized_text_mecab_tohoku(tokenized_text=tokenized_text)                        
-                        result_list_attentions_and_raws = [sentence_id, keywords, input_sentence, tokenized_sentence, human_words, self.toigo[human_words[0]], category_synonyms[i], attention_result, association_words_raw, association_score_raw]
+                        result_list_attentions_and_raws = [sentence_id, values['stims'], input_sentence, tokenized_sentence, human_words, values['category'], category_synonyms[i], attention_result, association_words_raw, association_score_raw]
                     else:
                         pass
 
@@ -149,7 +149,7 @@ class BertAssociation():
 
 
     # 刺激語を入力文に変換する
-    def keywords_to_sentences(self, keywords, human_word):
+    def _keywords_to_sentences(self, values):
         """
         複数の刺激語バージョンにおける、連想文の作成
         """
@@ -168,47 +168,48 @@ class BertAssociation():
                 categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo
 
             # {stims}は刺激語に置換する
-            for category, sentence_synonyms in categories_and_sentences.items():
-                if self.toigo[human_word] == category:
-                    if len(sentence_synonyms['synonyms']) == 0:                    
-                        sentence_parts = []
-                        for part in sentence_synonyms['sentence']:
-                            if part == "{stims}":
-                                for i in range(self.args.num_stims):
-                                    sentence_parts.append(keywords[i])
-                                    if i == (self.args.num_stims - 1):
-                                        pass
-                                    else:
-                                        sentence_parts.append("、")
+            base_sentence = categories_and_sentences[values['category']]
+            # for category, sentence_synonyms in categories_and_sentences.items():
+            #    if self.toigo[human_word] == category:
+            if len(base_sentence['synonyms']) == 0:                    
+                sentence_parts = []
+                for part in base_sentence['sentence']:
+                    if part == "{stims}":
+                        for i in range(self.args.num_stims):
+                            sentence_parts.append(values['stims'][i])
+                            if i == (self.args.num_stims - 1):
+                                pass
                             else:
-                                sentence_parts.append(part)
-                        category_synonyms.append(category)
-                        sentence = ''.join(sentence_parts)
-                        input_sentences.append(sentence)  
-
-
-
+                                sentence_parts.append("、")
                     else:
-                        for synonym in sentence_synonyms['synonyms']:
-                            sentence_parts = []
-                            for part in sentence_synonyms['sentence']:
-                                if part == "{stims}":
-                                    for i in range(self.args.num_stims):
-                                        sentence_parts.append(keywords[i])
-                                        if i == (self.args.num_stims - 1):
-                                            pass
-                                        else:
-                                            sentence_parts.append("、")
+                        sentence_parts.append(part)
+                category_synonyms.append(values['category'])
+                sentence = ''.join(sentence_parts)
+                input_sentences.append(sentence)  
 
-                                elif part == '{cat}':
-                                    sentence_parts.append(synonym)
+
+
+            else:
+                for synonym in base_sentence['synonyms']:
+                    sentence_parts = []
+                    for part in base_sentence['sentence']:
+                        if part == "{stims}":
+                            for i in range(self.args.num_stims):
+                                sentence_parts.append(values['stims'][i])
+                                if i == (self.args.num_stims - 1):
+                                    pass
                                 else:
-                                    sentence_parts.append(part)
+                                    sentence_parts.append("、")
 
-                            if len(synonym) == 0: category_synonyms.append('0nan')
-                            else: category_synonyms.append(synonym)
-                            sentence = ''.join(sentence_parts)
-                            input_sentences.append(sentence)                         
+                        elif part == '{cat}':
+                            sentence_parts.append(synonym)
+                        else:
+                            sentence_parts.append(part)
+
+                    if len(synonym) == 0: category_synonyms.append('0nan')
+                    else: category_synonyms.append(synonym)
+                    sentence = ''.join(sentence_parts)
+                    input_sentences.append(sentence)                         
 
             return input_sentences, category_synonyms               
 
@@ -226,7 +227,7 @@ class BertAssociation():
             for part in sentence:
                 if part == "{stims}":
                     for i in range(self.args.num_stims):
-                        sentence_parts.append(keywords[i])
+                        sentence_parts.append(values['stims'][i])
                         if i == (self.args.num_stims - 1):
                             pass
                         else:
@@ -358,7 +359,7 @@ class BertAssociation():
 
 
     # 出力から名詞を除く関数
-    def extract_noun_from_output(self, association_words, association_score):
+    def _extract_noun_from_output(self, association_words, association_score):
 
         # 単語のリストとスコアのリストを同時に更新する
         association_words_extract_noun = []
@@ -391,7 +392,7 @@ class BertAssociation():
 
 
     # 刺激語や限定語を除く関数
-    def extract_paraphrase_from_output(self, keyword, human_words, association_words, association_score):
+    def _extract_paraphrase_from_output(self, stim, category, association_words, association_score):
 
         # 単語のリストとスコアのリストを同時に更新する
         association_words_extract_paraphrase = []
@@ -400,14 +401,14 @@ class BertAssociation():
         for i, association_word in enumerate(association_words):
             # 連想文の〇〇、〇〇、〇〇...の都道府県は？の都道府県部分を除く
             if self.multi_stims_flag:
-                if association_word == self.toigo[human_words[0]]:
+                if association_word == category:
                     continue
-                elif self.toigo[human_words[0]] == "都道府県" and association_word == "県":
+                elif category == "都道府県" and association_word == "県":
                     continue
-                elif self.toigo[human_words[0]] == "家の中である場所" and association_word == "家":
+                elif category == "家の中である場所" and association_word == "家":
                     continue
 
-            if association_word in self.paraphrase[keyword]:
+            if association_word in self.paraphrase[stim]:
                 continue
             else:
                 association_words_extract_paraphrase.append(association_word)
@@ -417,7 +418,7 @@ class BertAssociation():
 
 
     # 出力を名寄せする関数
-    def nayose_from_output(self, association_words, association_score):
+    def _nayose_from_output(self, association_words, association_score):
 
         # 単語のリストとスコアのリストを同時に更新する
         association_words_nayose = []
@@ -470,6 +471,6 @@ if __name__ == '__main__':
         analyzer = Analyzer2(args)
         if args.another_analysis == 0 or args.another_analysis == 293:
             analyzer.analysis_result_match_nayose(results_csv=results_csv, output_csv=output1_csv, bert_interval=1)
-            analyzer.analysis_analysis_result_match(results_csv=output1_csv, output_csv=output2_csv)
+            # analyzer.analysis_analysis_result_match(results_csv=output1_csv, output_csv=output2_csv)
             analyzer.hits_at_k(results_dir=save_dir, target_ranks=args.ps)
             analyzer.attention_visualizasion(save_dir)
