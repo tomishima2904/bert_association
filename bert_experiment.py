@@ -1,4 +1,5 @@
 # 必要なライブラリ。 pipやcondaでインストールしてください。
+from unicodedata import category
 from transformers import BertJapaneseTokenizer, TFBertForMaskedLM, BertConfig
 import tensorflow as tf
 import spacy
@@ -69,6 +70,21 @@ class BertAssociation():
             pass
 
         self.multi_stims_flag = args.multi_stims_flag
+
+        if args.category_flag:
+            if self.args.brackets_flag:
+                    # MASKに鍵括弧「」を付ける場合
+                    self.categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo_mask
+            else:
+                # MASKに鍵括弧「」を付けない場合
+                self.categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo
+        else:
+            if self.args.brackets_flag:
+                # MASKに鍵括弧「」を付ける場合
+                self.base_sentence = utils_tools.hukusuu_sigeki_sentences_mask
+            else:
+                # MASKに鍵括弧「」を付けない場合
+                self.base_sentence = utils_tools.hukusuu_sigeki_sentences
 
 
     def __call__(self, results_csv, results_csv_attention):
@@ -159,16 +175,8 @@ class BertAssociation():
 
         # 問い語(=限定語)を付与する場合
         if self.category_flag:
-            if self.args.brackets_flag:
-                # MASKに鍵括弧「」を付ける場合
-                categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo_mask
-
-            else:
-                # MASKに鍵括弧「」を付けない場合
-                categories_and_sentences = utils_tools.hukusuu_sigeki_sentences_toigo
-
             # {stims}は刺激語に置換する
-            base_sentence = categories_and_sentences[values['category']]
+            base_sentence = self.categories_and_sentences[values['category']]
             # for category, sentence_synonyms in categories_and_sentences.items():
             #    if self.toigo[human_word] == category:
             if len(base_sentence['synonyms']) == 0:                    
@@ -186,9 +194,6 @@ class BertAssociation():
                 category_synonyms.append(values['category'])
                 sentence = ''.join(sentence_parts)
                 input_sentences.append(sentence)  
-
-
-
             else:
                 for synonym in base_sentence['synonyms']:
                     sentence_parts = []
@@ -214,17 +219,10 @@ class BertAssociation():
             return input_sentences, category_synonyms               
 
         # 問い語(=限定語)を付与しない場合
-        else:
-            if self.args.brackets_flag:
-                # MASKに鍵括弧「」を付ける場合
-                sentence = utils_tools.hukusuu_sigeki_sentences_mask
-            else:
-                # MASKに鍵括弧「」を付けない場合
-                sentence = utils_tools.hukusuu_sigeki_sentences
-
+        else:            
             # {stims}は刺激語に置換する
             sentence_parts = []
-            for part in sentence:
+            for part in self.base_sentence:
                 if part == "{stims}":
                     for i in range(self.args.num_stims):
                         sentence_parts.append(values['stims'][i])
