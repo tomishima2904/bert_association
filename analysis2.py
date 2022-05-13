@@ -74,16 +74,16 @@ class Analyzer2(Analyzer):
 
         for sid, sentence, attns, category, answer in zip(results.sid, tokenized_sentences, attnetion_weights, results.category, results.answer):
             assert len(sentence) == len(attns[0])
-            if sid % 10 == 0 and sid != 0: result_html += color_bar
+            if int(sid[:3]) % 10 == 0 and int(sid[:3]) != 0: result_html += color_bar
             if self.args.avg_flag:
                 for attn in attns:
-                    attn_output_html = f'{sid:3d}:' +self._mk_html(sentence, attn)
+                    attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
                     
             else:
                 if self.args.target_heads == None: target_heads = [head for head in range(12)]
                 else: target_heads = self.args.target_heads
                 for head, attn in zip(target_heads, attns):
-                    attn_output_html = f'{sid:3d}-{head:2d}:' + self._mk_html(sentence, attn)
+                    attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
 
             # display(HTML(attn_output_html))  # uncomment out to display on jupyter
             tagged_attn_output_html = f'<p>{attn_output_html} (c:{category}, a:{answer})</p>\n'

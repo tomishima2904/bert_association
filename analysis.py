@@ -1,3 +1,4 @@
+from cmath import nan
 import csv
 import ast
 import os, sys
@@ -76,10 +77,10 @@ class Analyzer(object):
                         not_bert_and_human_num.append(len(not_bert_and_human_word))
 
                 category = self.toigo[ast.literal_eval(result.answer)[0]]
-                result_tmp = i, result.stims, result.input_sentence, result.answer, category, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                result_tmp = result.sid, result.stims, result.input_sentence, result.answer, category, result.category_synonyms, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
                 result_match.append(result_tmp)
 
-        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'ranks', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'ranks', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
 
         csv_writer(header=header_results, result=result_match, csv_file_path=output_csv)
 
@@ -183,27 +184,43 @@ class Analyzer(object):
             hits_ratio = total_num_within_k/total_sentences
             hits_k_results = [at_most_k, hits_ratio, total_num_within_k]          
 
-            for category in category_list:
-                specifical_df = results[results['category'] == category]
-                specifical_total_sentences = len(specifical_df)
-                specifical_masked_rank_at_k = [spe_row.ranks <= at_most_k and spe_row.ranks != 0 for spe_row in specifical_df.itertuples()]
-                specifical_total_num_within_k = sum(specifical_masked_rank_at_k)
-                specifical_hits_ratio = specifical_total_num_within_k/specifical_total_sentences
-                hits_k_results.append(specifical_hits_ratio)
+            if self.args.category_flag:
+                for category in category_list:
+                    specifical_df = results[results['category'] == category]
+                    specifical_synonyms_list = list(set(specifical_df.category_synonyms.tolist()))
+                    specifical_synonyms_list.sort()
+                    for synonym in specifical_synonyms_list:                        
+                        spe_syn_df = specifical_df[specifical_df['category_synonyms'] == synonym]
+                        spe_syn_total_sentences = len(spe_syn_df)                        
+                        print(category, synonym, spe_syn_total_sentences)
+                        spe_syn_masked_rank_at_k = [spe_row.ranks <= at_most_k and spe_row.ranks != 0 for spe_row in spe_syn_df.itertuples()]
+                        spe_syn_tatal_num_within_k = sum(spe_syn_masked_rank_at_k)
+                        spe_syn_hits_ratio = spe_syn_tatal_num_within_k/spe_syn_total_sentences
+                        hits_k_results.append(spe_syn_hits_ratio)                                                                                        
 
-                if i == 0: 
-                    spe_header = f'{category}({specifical_total_sentences})'
-                    header.append(spe_header)
+                        if i == 0: 
+                            spe_header = f'{category}:{synonym}({spe_syn_total_sentences})'
+                            header.append(spe_header)
+
+            else:
+                for category in category_list:
+                    specifical_df = results[results['category'] == category]                                                
+                    specifical_total_sentences = len(specifical_df)
+                    specifical_masked_rank_at_k = [spe_row.ranks <= at_most_k and spe_row.ranks != 0 for spe_row in specifical_df.itertuples()]
+                    specifical_total_num_within_k = sum(specifical_masked_rank_at_k)
+                    specifical_hits_ratio = specifical_total_num_within_k/specifical_total_sentences
+                    hits_k_results.append(specifical_hits_ratio)
+
+                    if i == 0: 
+                        spe_header = f'{category}({specifical_total_sentences})'
+                        header.append(spe_header)
 
             all_k_resutlts.append(hits_k_results)
 
-        print(all_k_resutlts)
+        print("Done hits at k\n")
         output_file = f"{results_dir}/hits_at_k.csv"
         csv_writer(header=header, result=all_k_resutlts, csv_file_path=output_file)
         
-
-
-
 
 
 ### 実験 ###

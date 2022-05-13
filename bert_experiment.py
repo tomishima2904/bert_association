@@ -80,7 +80,12 @@ class BertAssociation():
             if self.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
-                input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=answer)
+                if self.category_flag: 
+                    input_sentences, category_synonyms = self.keywords_to_sentences(keywords=keywords, human_word=answer)                    
+                else: 
+                    input_sentences = self.keywords_to_sentences(keywords=keywords, human_word=answer)
+                    category_synonyms = [0]*len(input_sentences)
+                
             else:
                 pass
 
@@ -93,6 +98,7 @@ class BertAssociation():
             else:
                 pass
             print(input_sentences)
+            
 
             # 1つのキーワードで複数の入力文があるため, for文で愚直に回す
             for i, input_sentence in enumerate(input_sentences):
@@ -120,18 +126,20 @@ class BertAssociation():
 
                     # 結果を保存する
                     if self.multi_stims_flag:
-                        result_list = [sid, keywords, input_sentence, human_words, self.toigo[human_words[0]], association_words, association_score]
+                        if self.category_flag: sentence_id = f'{sid:0>3}-{i:0>2}'
+                        else: sentence_id = f'{sid:0>3}-'
+                        result_list = [sentence_id, keywords, input_sentence, human_words, self.toigo[human_words[0]], category_synonyms[i], association_words, association_score]
                         tokenized_text = self.tokenizer.tokenize(input_sentence)
                         tokenized_sentence, _ = utils_tools.transform_tokenized_text_mecab_tohoku(tokenized_text=tokenized_text)                        
-                        result_list_attentions_and_raws = [sid, keywords, input_sentence, tokenized_sentence, human_words, self.toigo[human_words[0]], attention_result, association_words_raw, association_score_raw]
+                        result_list_attentions_and_raws = [sentence_id, keywords, input_sentence, tokenized_sentence, human_words, self.toigo[human_words[0]], category_synonyms[i], attention_result, association_words_raw, association_score_raw]
                     else:
                         pass
 
                     results.append(result_list)
                     results_attention_and_raw.append(result_list_attentions_and_raws)
 
-        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'output_words', 'output_scores']       
-        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'tokenized_sentence', 'answer', 'category', 'attn_weights_of_mask', 'output_raw_words', 'output_raw_scores']
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'output_words', 'output_scores']       
+        header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'tokenized_sentence', 'answer', 'category', 'category_synonyms', 'attn_weights_of_mask', 'output_raw_words', 'output_raw_scores']
 
         # 結果を書き出す
         csv_writer(header=header_results, result=results, csv_file_path=results_csv)        
@@ -147,6 +155,7 @@ class BertAssociation():
         """
         # 入力文を生成する
         input_sentences = []
+        category_synonyms = []
 
         # 問い語(=限定語)を付与する場合
         if self.category_flag:
@@ -160,7 +169,8 @@ class BertAssociation():
 
             # {stims}は刺激語に置換する
             for category, sentence_synonyms in categories_and_sentences.items():
-                    if self.toigo[human_word] == category:
+                if self.toigo[human_word] == category:
+                    if len(sentence_synonyms['synonyms']) == 0:                    
                         sentence_parts = []
                         for part in sentence_synonyms['sentence']:
                             if part == "{stims}":
@@ -172,8 +182,35 @@ class BertAssociation():
                                         sentence_parts.append("、")
                             else:
                                 sentence_parts.append(part)
+                        category_synonyms.append(category)
                         sentence = ''.join(sentence_parts)
-                        input_sentences.append(sentence)
+                        input_sentences.append(sentence)  
+
+
+
+                    else:
+                        for synonym in sentence_synonyms['synonyms']:
+                            sentence_parts = []
+                            for part in sentence_synonyms['sentence']:
+                                if part == "{stims}":
+                                    for i in range(self.args.num_stims):
+                                        sentence_parts.append(keywords[i])
+                                        if i == (self.args.num_stims - 1):
+                                            pass
+                                        else:
+                                            sentence_parts.append("、")
+
+                                elif part == '{cat}':
+                                    sentence_parts.append(synonym)
+                                else:
+                                    sentence_parts.append(part)
+
+                            if len(synonym) == 0: category_synonyms.append('0nan')
+                            else: category_synonyms.append(synonym)
+                            sentence = ''.join(sentence_parts)
+                            input_sentences.append(sentence)                         
+
+            return input_sentences, category_synonyms               
 
         # 問い語(=限定語)を付与しない場合
         else:
@@ -185,7 +222,6 @@ class BertAssociation():
                 sentence = utils_tools.hukusuu_sigeki_sentences
 
             # {stims}は刺激語に置換する
-
             sentence_parts = []
             for part in sentence:
                 if part == "{stims}":
@@ -200,7 +236,7 @@ class BertAssociation():
             sentence = ''.join(sentence_parts)
             input_sentences.append(sentence)
 
-        return input_sentences
+            return input_sentences
 
 
     # 連想を行い, 上位n位までのリストを返す関数
