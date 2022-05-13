@@ -30,38 +30,38 @@ hukusuu_sigeki_sentences_mask = ["{stims}", "から連想する", "言葉", "は
 
 # 複数→1つの連想：限定語あり
 hukusuu_sigeki_sentences_toigo = {
-        "仲間": {'sentence': ["{stims}", "は*の仲間です。"], 'synonyms': ['範疇', '一部', '集団', 'グループ']},
+        "仲間": {'sentence': ["{stims}", 'は* ', '{cat}', 'です。'], 'synonyms': ['の仲間', 'の範疇', 'の一部', 'の集団', 'のグループ', '']},
         "部分": {'sentence': ["{stims}", "からできているものは*です。"], 'synonyms': []}, 
-        "色": {'sentence': ["{stims}", "から連想する色は*です。"], 'synonyms': []},
-        "季節": {'sentence': ["{stims}", "から連想する季節は*です。"], 'synonyms': []},
+        "色": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は*です。'], 'synonyms': ['色']},
+        "季節": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は*です。'], 'synonyms': ['季節']},
         "家の中である場所": {'sentence': ["家の中で", "{stims}", "がある場所は*です。"], 'synonyms': []},
         "どんなときに持っていく": {'sentence': ["{stims}", "は*のときに持っていきます。"], 'synonyms': []},
-        "行事": {'sentence': ["{stims}", "から連想される行事は*です。"], 'synonyms': []},
-        "メニュー": {'sentence': ["{stims}", "から連想されるメニューは*です。"], 'synonyms': []},
+        "行事": {'sentence': ["{stims}", "から連想される, '{cat}', は*です。"], 'synonyms': ['行事']},
+        "メニュー": {'sentence': ["{stims}", 'から連想される', '{cat}', 'は*です。'], 'synonyms': ['メニュー']},
         "使ってすること": {'sentence': ["{stims}", "を使ってすることは*です。"], 'synonyms': []},
-        "どのような生き物": {'sentence': ["{stims}", "は*の生き物です。"], 'synonyms': []},
-        "都道府県": {'sentence': ["{stims}", "から連想する都道府県は*です。"], 'synonyms': []},
-        "スポーツ": {'sentence': ["{stims}", "から想像できるスポーツは*です。"], 'synonyms': []},
-        "場所": {'sentence': ["{stims}", "から連想する場所は*です。"], 'synonyms': []},
-        "国": {'sentence': ["{stims}", "から連想する国は*です。"], 'synonyms': []},
+        "どのような生き物": {'sentence': ["{stims}", 'は*の', '{cat}', 'です。'], 'synonyms': ['生き物']},
+        "都道府県": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は*です。'], 'synonyms': ['都道府県']},
+        "スポーツ": {'sentence': ["{stims}", 'から想像できる', '{cat}', 'は*です。'], 'synonyms': ['スポーツ']},
+        "場所": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は*です。'], 'synonyms': ['場所']},
+        "国": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は*です。'], 'synonyms': ['国']},
         "どこ": {'sentence': ["{stims}", "から連想するのは*です。"], 'synonyms': []}    
 }
 
 # 複数→1つの連想：限定語あり、鍵括弧「」無し
 hukusuu_sigeki_sentences_toigo_mask = {
-        "仲間": {'sentence': ["{stims}", "は「*」の仲間です。"], 'synonyms': ['範疇', '一部', '集団', 'グループ']},
+        "仲間": {'sentence': ["{stims}", 'は「*」', '{cat}', 'です。'], 'synonyms': ['の仲間', 'の範疇', 'の一部', 'の集団', 'のグループ', '']},
         "部分": {'sentence': ["{stims}", "からできているものは「*」です。"], 'synonyms': []},
-        "色": {'sentence': ["{stims}", "から連想する色は「*」です。"], 'synonyms': []},
-        "季節": {'sentence': ["{stims}", "から連想する季節は「*」です。"], 'synonyms': []},
+        "色": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は「*」です。'], 'synonyms': ['色']},
+        "季節": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は「*」です。'], 'synonyms': ['季節']},
         "家の中である場所": {'sentence': ["家の中で", "{stims}", "がある場所は「*」です。"], 'synonyms': []},
         "どんなときに持っていく": {'sentence': ["{stims}", "は「*」のときに持っていきます。"], 'synonyms': []},
-        "行事": {'sentence': ["{stims}", "から連想される行事は「*」です。"], 'synonyms': []},
-        "メニュー": {'sentence': ["{stims}", "から連想されるメニューは「*」です。"], 'synonyms': []},
+        "行事": {'sentence': ["{stims}", 'から連想される', '{cat}', 'は「*」です。'], 'synonyms': ['行事']},
+        "メニュー": {'sentence': ["{stims}", 'から連想される', '{cat}', 'は「*」です。'], 'synonyms': ['メニュー']},
         "使ってすること": {'sentence': ["{stims}", "を使ってすることは「*」です。"], 'synonyms': []},
         "どのような生き物": {'sentence': ["{stims}", "は「*」のような生き物です。"], 'synonyms': []},
-        "都道府県": {'sentence': ["{stims}", "から連想する都道府県は「*」です。"], 'synonyms': []},
-        "スポーツ": {'sentence': ["{stims}", "から想像できるスポーツは「*」です。"], 'synonyms': []},
-        "場所": {'sentence': ["{stims}", "から連想する場所は「*」です。"], 'synonyms': []},
-        "国": {'sentence': ["{stims}", "から連想する国は「*」です。"], 'synonyms': []},
+        "都道府県": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は「*」です。'], 'synonyms': ['都道府県']},
+        "スポーツ": {'sentence': ["{stims}", 'から想像できる', '{cat}', 'は「*」です。'], 'synonyms': ['スポーツ']},
+        "場所": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は「*」です。'], 'synonyms': ['場所']},
+        "国": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は「*」です。'], 'synonyms': ['国']},
         "どこ": {'sentence': ["{stims}", "から連想するのは「*」です。"], 'synonyms': []}
 }
