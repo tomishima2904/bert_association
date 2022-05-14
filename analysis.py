@@ -91,7 +91,7 @@ class Analyzer(object):
 
         # 連想文の組み合わせ
         if self.args.multi_stims_flag:
-            if self.args.category_flag:
+            if self.args.category_opt:
                 rensoubun_numbers = [[0]]
             else:
                 rensoubun_numbers = [[0]]
@@ -184,7 +184,7 @@ class Analyzer(object):
             hits_ratio = total_num_within_k/total_sentences
             hits_k_results = [at_most_k, hits_ratio, total_num_within_k]          
 
-            if self.args.category_flag:
+            if self.args.category_opt=='cat':
                 for category in category_list:
                     specifical_df = results[results['category'] == category]
                     specifical_synonyms_list = list(set(specifical_df.category_synonyms.tolist()))
