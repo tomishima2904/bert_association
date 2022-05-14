@@ -20,7 +20,8 @@ python bert_experiment.py \
 	--sep_flag='f' \
 	--target_heads -1 \
 	--target_layer=-1 \
-	--category_flag='t'
+    --reverse_flag='f' \
+	--category_opt='cat'
 ```               
 - flag系は`True`や`t`もしくは`False`や`f`で選択
 - `target_heads`等はリストが引数となる．`[2, 4, 5]`のように引数を渡したければ`--target_heads 2 4 5`とする

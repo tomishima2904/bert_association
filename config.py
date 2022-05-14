@@ -8,7 +8,8 @@ parser.add_argument('--brackets_flag', default=True, type=strtobool, help='Addin
 parser.add_argument('--model_opt', default='cl-tohoku', type=str, help='Specify a BERT model')
 parser.add_argument('--dict_mecab', default='ipadic', type=str, help='[unidic_lite, unidic, ipadic]')
 parser.add_argument('--extract_noun_opt', default='mecab', type=str, help='[mecab, ginza]')
-parser.add_argument('--category_flag', default=True, type=strtobool, help='Using categorizing word or not')
+parser.add_argument('--category_opt', default='cat', type=str, help='[cat, WOcat, kotoba]')
+parser.add_argument('--reverse_flag', default=False, type=strtobool, help='Associate category if true')
 # above args considering directory name
 
 parser.add_argument('--analysis_flag', default=True, type=strtobool, help='Analyze or not')

@@ -44,10 +44,9 @@ def dir_name_getter(args, get_date=None):
     if args.multi_stims_flag: stims_name = "stims{}".format(args.num_stims)
     else: stims_name = "WOstims"
 
-    if args.category_flag: cat_name = "cat"
-    else: cat_name = "WOcat"
 
-    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{cat_name}"      
+    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{args.category_opt}"
+    if args.reverse_flag: save_dir =f'{save_dir}_rev'
     return save_dir
 
 
