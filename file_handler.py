@@ -50,7 +50,7 @@ def dir_name_getter(args, get_date=None):
     return save_dir
 
 
-def html_writer(body, result_dir:str, output_file:str):
+def html_writer(body, result_dir:str, output_file:str, args):
     result = f'''
             <html>
             <head>
@@ -64,7 +64,7 @@ def html_writer(body, result_dir:str, output_file:str):
             </html>
         '''
 
-    save_file_name = f'{result_dir}/{output_file}.html'
+    save_file_name = f'{result_dir}/{output_file}_{args.category_opt}.html'
 
     with open(save_file_name, 'w', encoding='utf-8') as f:
         f.write(result)

@@ -62,7 +62,7 @@ class Analyzer2(Analyzer):
 
 
     def attention_visualizasion(self, results_csv:str):
-        results_path = f'{results_csv}/result_attentions_and_raws.csv'
+        results_path = f'{results_csv}/result_attentions_and_raws_{self.args.category_opt}.csv'
         results = csv_results_reader(results_path)
         attnetion_weights = self.attention_weights_handler(results)
         tokenized_sentences = results.tokenized_sentence
@@ -105,7 +105,7 @@ class Analyzer2(Analyzer):
         if self.args.sep_flag: sep_name = 'sep'
         else: sep_name = 'WOsep'
         output_file = f'visu_{avg_name}_{sep_name}'
-        html_writer(body=result_html, result_dir=results_csv, output_file=output_file)
+        html_writer(body=result_html, result_dir=results_csv, output_file=output_file, args=self.args)
         
 
 
