@@ -44,9 +44,8 @@ def dir_name_getter(args, get_date=None):
     if args.multi_stims_flag: stims_name = "stims{}".format(args.num_stims)
     else: stims_name = "WOstims"
 
-
-    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{args.category_opt}"
-    if args.reverse_flag: save_dir =f'{save_dir}_rev'
+    save_dir = f"results/{date_time}_{args.max_words}_{brackets}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{file_name_getter(args)}"
+    
     return save_dir
 
 
