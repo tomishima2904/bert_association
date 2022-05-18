@@ -62,7 +62,7 @@ class Analyzer2(Analyzer):
 
 
     def attention_visualizasion(self, results_csv:str):
-        results_path = f'{results_csv}/result_attentions_and_raws_{self.args.category_opt}.csv'
+        results_path = f'{results_csv}/result_attentions_and_raws_{file_name_getter(self.args)}.csv'
         results = csv_results_reader(results_path)
         attnetion_weights = self.attention_weights_handler(results)
         tokenized_sentences = results.tokenized_sentence
@@ -116,4 +116,8 @@ if __name__ == '__main__':
     analysis = Analyzer2(args)
     results_dir = dir_name_getter(args, get_date=args.get_date)
     print(results_dir)
+    result_csv = results_dir + f'/result_{file_name_getter(args)}.csv'
+    analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"    
+    analysis.analysis_result_match_nayose(result_csv, analysis_csv)
+    analysis.hits_at_k(results_dir=results_dir, target_ranks=args.ps)
     analysis.attention_visualizasion(results_dir)

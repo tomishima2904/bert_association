@@ -8,6 +8,7 @@ sys.path.append('.')
 from file_handler import *
 from dict_maker import SearchFromHukusuuSigeki
 from config import args
+import utils_tools
 
 
 class Analyzer(object):
@@ -23,18 +24,24 @@ class Analyzer(object):
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
             # self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()
+            if args.reverse_flag:
+                self.categories_and_sentences = utils_tools.base_sentences_and_synonyms  
+
         else:
             pass
 
     # 出力結果の分析
-    def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval):
+    def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval=1):
         results = csv_results_reader(results_csv)
 
         # 出力した単語と正解の連想語が一致する場合にリストにぶち込んだりカウントを足したりする
         result_match = []
         for i, result in enumerate(results.itertuples()):
             if self.args.another_analysis == 293:
-                human_words = ast.literal_eval(result.answer)
+                if self.args.reverse_flag:
+                    human_words = self.categories_and_sentences[result.category]['synonyms']
+                else:
+                    human_words = ast.literal_eval(result.answer)
 
                 for l, human_word in enumerate(human_words):
                     human_words[l] = ''.join([k for k in human_word if not k.isdigit()])
@@ -172,7 +179,7 @@ class Analyzer(object):
 
     def hits_at_k(self, results_dir, target_ranks:list):
         
-        results = pd.read_csv(f"{results_dir}/analysis_{self.args.category_opt}.csv", header=0, engine="python", encoding='utf-8')   
+        results = pd.read_csv(f"{results_dir}/analysis_{file_name_getter(self.args)}.csv", header=0, engine="python", encoding='utf-8')   
         total_sentences = len(results)
         header = ['k', f'hits@k({total_sentences})', 'hits_num']
         all_k_resutlts = []
@@ -229,4 +236,7 @@ if __name__ == '__main__':
 
     analysis = Analyzer(args)
     results_dir = dir_name_getter(args, get_date=args.get_date)
+    result_csv = results_dir + f'/result_{file_name_getter(args)}.csv'
+    analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"    
+    analysis.analysis_result_match_nayose(result_csv, analysis_csv)
     analysis.hits_at_k(results_dir=results_dir, target_ranks=args.ps)
