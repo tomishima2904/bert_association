@@ -104,7 +104,7 @@ class Analyzer2(Analyzer):
         else: 'raw'
         if self.args.sep_flag: sep_name = 'sep'
         else: sep_name = 'WOsep'
-        output_file = f'visu_{avg_name}_{sep_name}'
+        output_file = f'visu_{avg_name}_{file_name_getter(self.args)}_{sep_name}'
         html_writer(body=result_html, result_dir=results_csv, output_file=output_file, args=self.args)
         
 
