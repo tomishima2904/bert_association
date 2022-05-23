@@ -225,7 +225,7 @@ class Analyzer(object):
             all_k_resutlts.append(hits_k_results)
 
         print("Done hits at k\n")
-        output_file = f"{results_dir}/hits_at_k_{self.args.category_opt}.csv"
+        output_file = f"{results_dir}/hits_at_k_{file_name_getter(self.args)}.csv"
         csv_writer(header=header, result=all_k_resutlts, csv_file_path=output_file)
         
 
