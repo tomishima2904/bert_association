@@ -23,10 +23,10 @@ def csv_writer(header:list, result:list, csv_file_path:str):
       writer.writerows(result)
 
 
-def dir_name_getter(args, get_date=None):
+def dir_name_getter(args):
     # この処理に共通する保存パス
-    if type(get_date) is str:
-        date_time = get_date
+    if type(args.get_date) is str:
+        date_time = args.get_date
 
     else:       
         t_delta = datetime.timedelta(hours=9)
