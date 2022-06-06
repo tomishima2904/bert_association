@@ -181,15 +181,19 @@ class Analyzer(object):
         
         results = pd.read_csv(f"{results_dir}/analysis_{file_name_getter(self.args)}.csv", header=0, engine="python", encoding='utf-8')   
         total_sentences = len(results)
-        header = ['k', f'hits@k({total_sentences})', 'hits_num']
+        total_sentences_WO_nakama = total_sentences - sum(results.category == '仲間')
+        header = ['k', f'hits@k({total_sentences})', 'hits_num', 'hits@k_WO_nakama']
         all_k_resutlts = []
         category_list = list(set(results.category.tolist()))
         category_list.sort()
         for i, at_most_k in enumerate(target_ranks):
             masked_rank_at_k = [result_row.ranks <= at_most_k and result_row.ranks != 0 for result_row in results.itertuples()]
+            masked_rank_at_k_WO_nakama = [result_row.ranks <= at_most_k and result_row.ranks != 0 and result_row.category != '仲間' for result_row in results.itertuples()]
             total_num_within_k = sum(masked_rank_at_k)
+            total_num_within_k_WO_nakama = sum(masked_rank_at_k_WO_nakama)
             hits_ratio = total_num_within_k/total_sentences
-            hits_k_results = [at_most_k, hits_ratio, total_num_within_k]          
+            hits_ratio_WO_nakama = total_num_within_k_WO_nakama / total_sentences_WO_nakama
+            hits_k_results = [at_most_k, hits_ratio, total_num_within_k, hits_ratio_WO_nakama]          
 
             if self.args.category_opt=='cat':
                 for category in category_list:
@@ -235,7 +239,7 @@ class Analyzer(object):
 if __name__ == '__main__':    
 
     analysis = Analyzer(args)
-    results_dir = dir_name_getter(args, get_date=args.get_date)
+    results_dir = dir_name_getter(args)
     result_csv = results_dir + f'/result_{file_name_getter(args)}.csv'
     analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"    
     analysis.analysis_result_match_nayose(result_csv, analysis_csv)
