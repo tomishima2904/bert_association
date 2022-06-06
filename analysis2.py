@@ -114,7 +114,7 @@ class Analyzer2(Analyzer):
 if __name__ == '__main__':    
 
     analysis = Analyzer2(args)
-    results_dir = dir_name_getter(args, get_date=args.get_date)
+    results_dir = dir_name_getter(args)
     print(results_dir)
     result_csv = results_dir + f'/result_{file_name_getter(args)}.csv'
     analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"    
