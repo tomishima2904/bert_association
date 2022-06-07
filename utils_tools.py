@@ -26,7 +26,7 @@ def transform_tokenized_text_mecab_tohoku(tokenized_text):
 base_sentence = ["{stims}", "から連想する", "言葉", "は", "{ans}", "です。"]
 
 # 複数→1つの連想：限定語なし
-base_sentence_without_category = ["{stims}", "は", '{ans}', "です。"]
+base_sentence_without_category = ["{stims}", "から連想するのは", '{ans}', "です。"]
 
 
 # 複数→1つの連想：限定語あり
@@ -37,12 +37,12 @@ base_sentences_and_synonyms = {
         "季節": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['季節', 'シーズン']},
         "家の中である場所": {'sentence': ["家の中で", "{stims}", 'がある場所は', '{ans}', 'です。'], 'synonyms': []},
         "どんなときに持っていく": {'sentence': ["{stims}", 'は', '{ans}', 'のときに持っていきます。'], 'synonyms': []},
-        "行事": {'sentence': ["{stims}", 'から連想される', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['行事']},
-        "メニュー": {'sentence': ["{stims}", 'から連想される', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['メニュー', '料理']},
+        "行事": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['行事']},
+        "メニュー": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['メニュー', '料理']},
         "使ってすること": {'sentence': ["{stims}", 'を使ってすることは', '{ans}', 'です。'], 'synonyms': []},
         "どのような生き物": {'sentence': ["{stims}", 'は', '{ans}', 'の', '{cat}', 'です。'], 'synonyms': ['生き物']},
         "都道府県": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['都道府県']},
-        "スポーツ": {'sentence': ["{stims}", 'から想像できる', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['スポーツ']},
+        "スポーツ": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['スポーツ']},
         "場所": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['場所', '所', 'ところ']},
         "国": {'sentence': ["{stims}", 'から連想する', '{cat}', 'は', '{ans}', 'です。'], 'synonyms': ['国']},
         "どこ": {'sentence': ["{stims}", 'から連想するのは', '{ans}', 'です。'], 'synonyms': []}    
