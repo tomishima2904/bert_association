@@ -18,7 +18,7 @@ class Analyzer2(Analyzer):
         super().__init__(args)
 
 
-    # to highlitht a word depending on attn 
+    # to highlitht a word depending on attn
     def _highlight(self, word, attn):
         html_color = f'#{255:02X}{int(255*(1 - attn)):02X}{int(255*(1 - attn)):02X}'
         return f'<span style="background-color: {html_color}">{word}</span>'
@@ -31,7 +31,7 @@ class Analyzer2(Analyzer):
             html += ' ' + self._highlight(word, attn)
         return html
 
-    
+
     def attention_weights_handler(self, results):
         # tokenized_sentences = results.tokenized_sentence.to_list()
         all_heads_attns = results.attn_weights_of_mask
@@ -46,7 +46,7 @@ class Analyzer2(Analyzer):
                 else:
                     converted_attns.append(attns)
 
-        else: 
+        else:
             for attns in all_heads_attns:
                 attns = np.array(ast.literal_eval(attns))
                 bool_list = [head in self.args.target_heads for head in range(12)]
@@ -67,11 +67,11 @@ class Analyzer2(Analyzer):
         attnetion_weights = self.attention_weights_handler(results)
         tokenized_sentences = results.tokenized_sentence
         tokenized_sentences = [ast.literal_eval(sentence) for sentence in tokenized_sentences]
-        assert len(attnetion_weights) == len(results.tokenized_sentence)    
+        assert len(attnetion_weights) == len(results.tokenized_sentence)
 
         color_bar_attn = [i*0.05 for i in range(21)]
         color_bar_str = [f'{i:.2f}' for i in color_bar_attn]
-        color_bar = f'<p> >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <p/>\n'
+        color_bar = f' >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< \n'
         displayed_color_bar_indices = [0]
         result_html = color_bar
 
@@ -82,14 +82,14 @@ class Analyzer2(Analyzer):
                 attns = [attn[:-1] for attn in attns]
                 # attns = softmax(attns, axis=1)  # normalize by softmax
                 attns = preprocessing.minmax_scale(attns, axis=1)
-                
-            if int(sid[:3]) % 10 == 0 and int(sid[:3]) not in displayed_color_bar_indices: 
+
+            if int(sid[:3]) % 10 == 0 and int(sid[:3]) not in displayed_color_bar_indices:
                 result_html += color_bar
                 displayed_color_bar_indices.append(int(sid[:3]))
             if self.args.avg_flag:
                 for attn in attns:
                     attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
-                    
+
             else:
                 if self.args.target_heads == None: target_heads = [head for head in range(12)]
                 else: target_heads = self.args.target_heads
@@ -97,8 +97,8 @@ class Analyzer2(Analyzer):
                     attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
 
             # display(HTML(attn_output_html))  # uncomment out to display on jupyter
-            tagged_attn_output_html = f'<p>{attn_output_html} (c:{category}, a:{answer})</p>\n'
-            result_html += tagged_attn_output_html            
+            tagged_attn_output_html = f'{attn_output_html} (c:{category}, a:{answer})<br>\n'
+            result_html += tagged_attn_output_html
 
         if self.args.avg_flag: avg_name = 'avg'
         else: 'raw'
@@ -106,18 +106,18 @@ class Analyzer2(Analyzer):
         else: sep_name = 'WOsep'
         output_file = f'visu_{avg_name}_{file_name_getter(self.args)}_{sep_name}'
         html_writer(body=result_html, result_dir=results_csv, output_file=output_file, args=self.args)
-        
+
 
 
 ### 実験 ###
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
 
     analysis = Analyzer2(args)
     results_dir = dir_name_getter(args)
     print(results_dir)
     result_csv = results_dir + f'/result_{file_name_getter(args)}.csv'
-    analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"    
+    analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"
     analysis.analysis_result_match_nayose(result_csv, analysis_csv)
     analysis.hits_at_k(results_dir=results_dir, target_ranks=args.ps)
     analysis.attention_visualizasion(results_dir)
