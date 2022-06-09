@@ -26,6 +26,7 @@ parser.add_argument('--output_words_from_bert', default=True, type=strtobool, he
 parser.add_argument('--packages_path', default='/home/tomishima2904/.local/lib/python3.6/site-packages', type=str, help='path where packages exist')
 parser.add_argument('--ps', nargs='*', default=[1, 2, 3, 4, 5, 10, 20, 30, 50, 100, 150], type=int, help='Specify ranks for analysis')
 parser.add_argument('--sep_flag', default=False, type=strtobool, help='visualizing attention weights with SEP token if True')
+parser.add_argument('--summary_num', default=10, type=int, help='number of extract from all output words')
 parser.add_argument('--target_heads', nargs='*', default=[-1], type=int, help='Specify which attention heads to get')
 parser.add_argument('--target_layer', default=-1, type=int, help='Specify output layer of transformer')
 
