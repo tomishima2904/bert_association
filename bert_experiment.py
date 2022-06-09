@@ -31,7 +31,7 @@ class BertAssociation():
         self.model_opt = args.model_opt  # str. モデルを定める.
         self.framework_opt = args.framework_opt  # str. 使用するフレームワークを定める(学習しないのであまり区別する意味はないが...)
 
-        if self.args.reverse_flag: assert self.args.category_opt=='cat'        
+        if self.args.reverse_flag: assert self.args.category_opt=='cat'
         if self.args.reverse_flag: self.target_mask = '{cat}'
         else: self.target_mask = '{ans}'
 
@@ -55,7 +55,7 @@ class BertAssociation():
             self.tokenizer = model_object.tokenizer
             self.model = model_object.model
             self.mecab = model_object.mecab
-            
+
         # spacy の ginza モデルをインストール
         self.ginza = spacy.load('ja_ginza')
 
@@ -76,7 +76,7 @@ class BertAssociation():
         self.multi_stims_flag = args.multi_stims_flag
 
         if args.category_opt=='cat':
-            self.categories_and_sentences = utils_tools.base_sentences_and_synonyms            
+            self.categories_and_sentences = utils_tools.base_sentences_and_synonyms
         elif args.category_opt=='WOcat':
             self.base_sentence = utils_tools.base_sentence_without_category
         elif args.category_opt=='kotoba':
@@ -86,9 +86,11 @@ class BertAssociation():
             sys.exit()
 
 
-    def __call__(self, results_csv, results_csv_attention):
+    def __call__(self, results_dir):
         results = []
         results_attention_and_raw = []
+        results_summary = []
+        results_all_summary = []
         # 複数→1つバージョンでは、answerは正解の連想語、keywordsは刺激語のリストのリスト
         # (謝罪) 1つ→複数の頃の名残でanswerという変数名だけど、複数→1つでは正解の連想語が入ります...
         for sid, values in self.dict_keywords.items():
@@ -98,11 +100,11 @@ class BertAssociation():
                 if self.category_opt=='cat':
                     base_sentence = self.categories_and_sentences[values['category']]
                     if  ( '{cat}' not in base_sentence['sentence']) and self.args.reverse_flag: continue
-                    else: input_sentences, category_synonyms = self._keywords_to_sentences(values=values) 
-                else: 
+                    else: input_sentences, category_synonyms = self._keywords_to_sentences(values=values)
+                else:
                     input_sentences = self._keywords_to_sentences(values=values)
                     category_synonyms = ['']*len(input_sentences)
-                
+
             else:
                 pass
 
@@ -115,7 +117,7 @@ class BertAssociation():
             else:
                 pass
             print(input_sentences)
-            
+
 
             # 1つのキーワードで複数の入力文があるため, for文で愚直に回す
             for i, input_sentence in enumerate(input_sentences):
@@ -147,22 +149,41 @@ class BertAssociation():
                         else: sentence_id = f'{sid:0>3}-'
                         result_list = [sentence_id, values['stims'], input_sentence, human_words, values['category'], category_synonyms[i], association_words, association_score]
                         tokenized_text = self.tokenizer.tokenize(input_sentence)
-                        tokenized_sentence, _ = utils_tools.transform_tokenized_text_mecab_tohoku(tokenized_text=tokenized_text)                        
+                        tokenized_sentence, _ = utils_tools.transform_tokenized_text_mecab_tohoku(tokenized_text=tokenized_text)
                         result_list_attentions_and_raws = [sentence_id, values['stims'], input_sentence, tokenized_sentence, human_words, values['category'], category_synonyms[i], attention_result, association_words_raw, association_score_raw]
+                        if self.args.category_opt == 'cat' and self.args.reverse_flag == False:
+                            results_all_summary.append([sentence_id, values['category'], category_synonyms[i], human_words, input_sentence, association_words[:self.args.summary_num]])
+                            if i==0:
+                                results_summary.append([sentence_id, values['category'], human_words, input_sentence, association_words[:self.args.summary_num]])
+                        else:
+                            results_summary.append([sentence_id, values['category'], human_words, input_sentence, association_words[:self.args.summary_num]]  )
                     else:
                         pass
 
                     results.append(result_list)
                     results_attention_and_raw.append(result_list_attentions_and_raws)
 
-        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'output_words', 'output_scores']       
+
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'output_words', 'output_scores']
         header_attns_and_raws = ['sid', 'stims', 'input_sentence', 'tokenized_sentence', 'answer', 'category', 'category_synonyms', 'attn_weights_of_mask', 'output_raw_words', 'output_raw_scores']
+        header_summary = ['sid', 'category', 'answer', 'input_sentence', 'output_words']
+
+        results_csv = f'{results_dir}/result_{file_name_getter(self.args)}.csv'
+        results_csv_attention = f'{results_dir}/result_attentions_and_raws_{file_name_getter(self.args)}.csv'
+        results_csv_summary = f'{results_dir}/result_summary_{self.args.summary_num}_{file_name_getter(self.args)}.csv'
 
         # 結果を書き出す
-        csv_writer(header=header_results, result=results, csv_file_path=results_csv)        
+        csv_writer(header=header_results, result=results, csv_file_path=results_csv)
 
         # Attentionを書き出す
         csv_writer(header=header_attns_and_raws, result=results_attention_and_raw, csv_file_path=results_csv_attention)
+
+        # Summaryを書き出す
+        csv_writer(header=header_summary, result=results_summary, csv_file_path=results_csv_summary)
+        if self.args.category_opt == 'cat' and self.args.reverse_flag == False:
+            header_all_summary = ['sid', 'category', 'synonyms', 'answer', 'input_sentence', 'output_words']
+            results_csv_all_summary = f'{results_dir}/result_all_summary_{self.args.summary_num}_{file_name_getter(self.args)}.csv'
+            csv_writer(header=header_all_summary, result=results_all_summary, csv_file_path=results_csv_all_summary)
 
 
     # 刺激語を入力文に変換する
@@ -178,7 +199,7 @@ class BertAssociation():
         if self.category_opt=='cat':
             # {stims}は刺激語に置換する
             base_sentence = self.categories_and_sentences[values['category']]
-            if len(base_sentence['synonyms']) == 0:                    
+            if len(base_sentence['synonyms']) == 0:
                 sentence_parts = []
                 for part in base_sentence['sentence']:
                     if part == self.target_mask:
@@ -186,7 +207,7 @@ class BertAssociation():
                         else: sentence_parts.append('[MASK]')
                     elif part == "{stims}":
                         sentence_parts.append('、'.join(values['stims']))
-                    elif part == '{ans}': 
+                    elif part == '{ans}':
                         sentence_parts.append(values['answer'])
                     elif part == '{cat}':
                         sentence_parts.append(values['category'])
@@ -194,7 +215,7 @@ class BertAssociation():
                         sentence_parts.append(part)
                 category_synonyms.append(values['category'])
                 sentence = ''.join(sentence_parts)
-                input_sentences.append(sentence)  
+                input_sentences.append(sentence)
             else:
                 for synonym in base_sentence['synonyms']:
                     sentence_parts = []
@@ -210,28 +231,28 @@ class BertAssociation():
                             sentence_parts.append(synonym)
                         else:
                             sentence_parts.append(part)
-                    
+
                     sentence = ''.join(sentence_parts)
-                    input_sentences.append(sentence)    
+                    input_sentences.append(sentence)
                     if self.args.reverse_flag:
                         category_synonyms.append(values['category'])
-                        return input_sentences, category_synonyms 
+                        return input_sentences, category_synonyms
                     else:
                         if len(synonym) == 0: category_synonyms.append('0nan')
-                        else: category_synonyms.append(synonym)                     
+                        else: category_synonyms.append(synonym)
 
-            return input_sentences, category_synonyms               
+            return input_sentences, category_synonyms
 
         # 問い語(=限定語)を付与しない場合
-        else:            
+        else:
             # {stims}は刺激語に置換する
             sentence_parts = []
             for part in self.base_sentence:
                 if part == self.target_mask:
                     if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')
-                    else: sentence_parts.append('[MASK]')                    
+                    else: sentence_parts.append('[MASK]')
                 elif part == "{stims}":
-                    sentence_parts.append('、'.join(values['stims']))                                    
+                    sentence_parts.append('、'.join(values['stims']))
                 else:
                     sentence_parts.append(part)
             sentence = ''.join(sentence_parts)
@@ -448,19 +469,19 @@ class BertAssociation():
                 association_words_nayose.append(association_word)
                 association_score_nayose.append(association_score[i])
 
-        return association_words_nayose, association_score_nayose, len(association_words_nayose)    
-    
+        return association_words_nayose, association_score_nayose, len(association_words_nayose)
+
 
 ### 実験 ###
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
 
     # bert_associationをインスタンス化
     bert_association = BertAssociation(args)
 
     # 分析バージョン
     # analysis_version = "human5_nayose_disred_output_nayose"
-    
+
     save_dir = dir_name_getter(args)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -472,7 +493,7 @@ if __name__ == '__main__':
 
     # 単語を出力する
     if args.output_words_from_bert:
-        bert_association(results_csv=results_csv, results_csv_attention=results_csv_attention)
+        bert_association(save_dir)
 
     # 集計する
     if args.analysis_flag:
