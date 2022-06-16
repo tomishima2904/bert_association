@@ -60,13 +60,12 @@ class BertAssociation():
         self.ginza = spacy.load('ja_ginza')
 
         if args.multi_stims_flag:
-            self.hukusuu_sigeki = SearchFromHukusuuSigeki(dataset=args.dataset, num_stims=args.num_stims)
+            self.hukusuu_sigeki = SearchFromHukusuuSigeki(args=args)
             self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
             self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
             # 複数の刺激語バージョンにおける、正解と不正解のリスト
             self.dict_keywords = self.hukusuu_sigeki.get_dict()
-            # 複数の刺激語バージョンにおける、採用する刺激語の数
-            self.num_stims = args.num_stims
+
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
             # self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()

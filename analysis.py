@@ -16,7 +16,7 @@ class Analyzer(object):
         self.args = args
 
         if args.multi_stims_flag:
-            self.hukusuu_sigeki = SearchFromHukusuuSigeki(dataset=args.dataset, num_stims=args.num_stims)
+            self.hukusuu_sigeki = SearchFromHukusuuSigeki(args=args)
             self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
             self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
             # 複数の刺激語バージョンにおける、正解と不正解のリスト
@@ -25,7 +25,7 @@ class Analyzer(object):
             # self.toigo = self.hukusuu_sigeki.get_toigo()
             self.kankei = self.hukusuu_sigeki.get_kankei()
             if args.reverse_flag:
-                self.categories_and_sentences = utils_tools.base_sentences_and_synonyms  
+                self.categories_and_sentences = utils_tools.base_sentences_and_synonyms
 
         else:
             pass
@@ -94,7 +94,7 @@ class Analyzer(object):
 
     # スコアを算出する  # Not working!!!!
     def analysis_analysis_result_match(self, results_csv, output_csv):
-        results = pd.read_csv(results_csv, header=0, engine="python")      
+        results = pd.read_csv(results_csv, header=0, engine="python")
 
         # 連想文の組み合わせ
         if self.args.multi_stims_flag:
@@ -178,8 +178,8 @@ class Analyzer(object):
 
 
     def hits_at_k(self, results_dir, target_ranks:list):
-        
-        results = pd.read_csv(f"{results_dir}/analysis_{file_name_getter(self.args)}.csv", header=0, engine="python", encoding='utf-8')   
+
+        results = pd.read_csv(f"{results_dir}/analysis_{file_name_getter(self.args)}.csv", header=0, engine="python", encoding='utf-8')
         total_sentences = len(results)
         total_sentences_WO_nakama = total_sentences - sum(results.category == '仲間')
         header = ['k', f'hits@k({total_sentences})', 'hits_num', 'hits@k_WO_nakama']
@@ -193,36 +193,36 @@ class Analyzer(object):
             total_num_within_k_WO_nakama = sum(masked_rank_at_k_WO_nakama)
             hits_ratio = total_num_within_k/total_sentences
             hits_ratio_WO_nakama = total_num_within_k_WO_nakama / total_sentences_WO_nakama
-            hits_k_results = [at_most_k, hits_ratio, total_num_within_k, hits_ratio_WO_nakama]          
+            hits_k_results = [at_most_k, hits_ratio, total_num_within_k, hits_ratio_WO_nakama]
 
             if self.args.category_opt=='cat':
                 for category in category_list:
                     specifical_df = results[results['category'] == category]
                     specifical_synonyms_list = list(set(specifical_df.category_synonyms.tolist()))
                     specifical_synonyms_list.sort()
-                    for synonym in specifical_synonyms_list:                        
+                    for synonym in specifical_synonyms_list:
                         spe_syn_df = specifical_df[specifical_df['category_synonyms'] == synonym]
-                        spe_syn_total_sentences = len(spe_syn_df)                        
+                        spe_syn_total_sentences = len(spe_syn_df)
                         print(category, synonym, spe_syn_total_sentences)
                         spe_syn_masked_rank_at_k = [spe_row.ranks <= at_most_k and spe_row.ranks != 0 for spe_row in spe_syn_df.itertuples()]
                         spe_syn_tatal_num_within_k = sum(spe_syn_masked_rank_at_k)
                         spe_syn_hits_ratio = spe_syn_tatal_num_within_k/spe_syn_total_sentences
-                        hits_k_results.append(spe_syn_hits_ratio)                                                                                        
+                        hits_k_results.append(spe_syn_hits_ratio)
 
-                        if i == 0: 
+                        if i == 0:
                             spe_header = f'{category}:{synonym}({spe_syn_total_sentences})'
                             header.append(spe_header)
 
             else:
                 for category in category_list:
-                    specifical_df = results[results['category'] == category]                                                
+                    specifical_df = results[results['category'] == category]
                     specifical_total_sentences = len(specifical_df)
                     specifical_masked_rank_at_k = [spe_row.ranks <= at_most_k and spe_row.ranks != 0 for spe_row in specifical_df.itertuples()]
                     specifical_total_num_within_k = sum(specifical_masked_rank_at_k)
                     specifical_hits_ratio = specifical_total_num_within_k/specifical_total_sentences
                     hits_k_results.append(specifical_hits_ratio)
 
-                    if i == 0: 
+                    if i == 0:
                         spe_header = f'{category}({specifical_total_sentences})'
                         header.append(spe_header)
 
@@ -231,16 +231,16 @@ class Analyzer(object):
         print("Done hits at k\n")
         output_file = f"{results_dir}/hits_at_k_{file_name_getter(self.args)}.csv"
         csv_writer(header=header, result=all_k_resutlts, csv_file_path=output_file)
-        
+
 
 
 ### 実験 ###
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
 
     analysis = Analyzer(args)
     results_dir = dir_name_getter(args)
     result_csv = results_dir + f'/result_{file_name_getter(args)}.csv'
-    analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"    
+    analysis_csv = results_dir + f"/analysis_{file_name_getter(args)}.csv"
     analysis.analysis_result_match_nayose(result_csv, analysis_csv)
     analysis.hits_at_k(results_dir=results_dir, target_ranks=args.ps)

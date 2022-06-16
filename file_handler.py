@@ -39,9 +39,6 @@ def dir_name_getter(args):
     if args.another_analysis == 293: another_name = "anl"
     else: another_name = "WOanl"
 
-    if args.multi_stims_flag: stims_name = "stims{}".format(args.num_stims)
-    else: stims_name = "WOstims"
-
     save_dir = f"results/{date_time}_{args.max_words}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{file_name_getter(args)}"
 
     return save_dir
