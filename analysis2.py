@@ -71,7 +71,7 @@ class Analyzer2(Analyzer):
 
         color_bar_attn = [i*0.05 for i in range(21)]
         color_bar_str = [f'{i:.2f}' for i in color_bar_attn]
-        color_bar = f' >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< \n'
+        color_bar = f' >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <br>\n'
         displayed_color_bar_indices = [0]
         result_html = color_bar
 
