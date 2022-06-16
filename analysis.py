@@ -180,22 +180,23 @@ class Analyzer(object):
     def hits_at_k(self, results_dir, target_ranks:list):
 
         results = pd.read_csv(f"{results_dir}/analysis_{file_name_getter(self.args)}.csv", header=0, engine="python", encoding='utf-8')
-        total_sentences = len(results)
-        total_sentences_WO_nakama = total_sentences - sum(results.category == '仲間')
+        extract_results = results[results['sid'].str.contains('-00')]  # 類似語の数は考慮せず、代表カテゴリー語の文だけ抽出
+        total_sentences = len(extract_results)  # 80題になるはず(fit2022.csvを使えば)
+        total_sentences_WO_nakama = total_sentences - sum(extract_results.category == '仲間')  # 「仲間」を除去したバージョン
         header = ['k', f'hits@k({total_sentences})', 'hits_num', 'hits@k_WO_nakama']
         all_k_resutlts = []
         category_list = list(set(results.category.tolist()))
         category_list.sort()
-        for i, at_most_k in enumerate(target_ranks):
-            masked_rank_at_k = [result_row.ranks <= at_most_k and result_row.ranks != 0 for result_row in results.itertuples()]
-            masked_rank_at_k_WO_nakama = [result_row.ranks <= at_most_k and result_row.ranks != 0 and result_row.category != '仲間' for result_row in results.itertuples()]
+        for i, at_most_k in enumerate(target_ranks):  # 全体のhits@kを算出する
+            masked_rank_at_k = [result_row.ranks <= at_most_k and result_row.ranks != 0 for result_row in extract_results.itertuples()]
+            masked_rank_at_k_WO_nakama = [result_row.ranks <= at_most_k and result_row.ranks != 0 and result_row.category != '仲間' for result_row in extract_results.itertuples()]
             total_num_within_k = sum(masked_rank_at_k)
             total_num_within_k_WO_nakama = sum(masked_rank_at_k_WO_nakama)
             hits_ratio = total_num_within_k/total_sentences
             hits_ratio_WO_nakama = total_num_within_k_WO_nakama / total_sentences_WO_nakama
             hits_k_results = [at_most_k, hits_ratio, total_num_within_k, hits_ratio_WO_nakama]
 
-            if self.args.category_opt=='cat':
+            if self.args.category_opt=='cat':  # カテゴリーごとのhits@kを算出する(類似語別)
                 for category in category_list:
                     specifical_df = results[results['category'] == category]
                     specifical_synonyms_list = list(set(specifical_df.category_synonyms.tolist()))
@@ -213,7 +214,7 @@ class Analyzer(object):
                             spe_header = f'{category}:{synonym}({spe_syn_total_sentences})'
                             header.append(spe_header)
 
-            else:
+            else:  # カテゴリーごとのhits@kを算出する
                 for category in category_list:
                     specifical_df = results[results['category'] == category]
                     specifical_total_sentences = len(specifical_df)
