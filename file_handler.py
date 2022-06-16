@@ -39,7 +39,8 @@ def dir_name_getter(args):
     if args.another_analysis == 293: another_name = "anl"
     else: another_name = "WOanl"
 
-    save_dir = f"results/{date_time}_{args.max_words}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{file_name_getter(args)}"
+    dataset_csv = args.dataset_csv.replace('.csv', '')
+    save_dir = f"results/{date_time}_{args.max_words}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{dataset_csv}_{file_name_getter(args)}"
 
     return save_dir
 
