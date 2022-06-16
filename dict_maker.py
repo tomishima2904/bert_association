@@ -4,20 +4,19 @@ import ast
 
 
 class SearchFromHukusuuSigeki():
-    def __init__(self, dataset, num_stims, path_for_jupyter=None, encoding_type="utf-8"):
+    def __init__(self, args, path_for_jupyter=None, encoding_type="utf-8"):
         if path_for_jupyter:
             path = path_for_jupyter
         else:
             path = "dataset/"
-        self.path_keywords = glob.glob(path + dataset + "/keywords.csv")
-        self.path_nayose = glob.glob(path + dataset + "/nayose.csv")
-        self.path_paraphrase = glob.glob(path + dataset + "/paraphrase.csv")
+        self.path_keywords = glob.glob(path + args.dataset_dir + "/" + args.dataset_csv)
+        self.path_nayose = glob.glob(path + args.dataset_dir + "/nayose.csv")
+        self.path_paraphrase = glob.glob(path + args.dataset_dir + "/paraphrase.csv")
         self.results = {}
         self.results_paraphrase = {}
         self.results_nayose = {}
         self.results_toigo = {}
         self.results_kankei = {}
-        self.sigeki_num = num_stims
 
         # キーワードと解答から dict型　を作成する
         for csv in self.path_keywords:
@@ -61,8 +60,8 @@ class SearchFromHukusuuSigeki():
     def get_dict(self):
         return self.results
 
-    def get_num(self):
-        return self.sigeki_num
+    # def get_num(self):
+    #    return self.sigeki_num
 
     def get_paraphrase_hukusuu_sigeki(self):
         return self.results_paraphrase
