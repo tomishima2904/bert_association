@@ -11,7 +11,7 @@ def csv_results_reader(results_csv):
       df = pd.read_csv(results_csv, header=0, encoding="utf-8", engine="python")
   except:
       df = pd.read_csv(results_csv, header=0, engine="python")
-  # print(df)  
+  # print(df)
   return df
 
 
@@ -28,13 +28,13 @@ def dir_name_getter(args):
     if type(args.get_date) is str:
         date_time = args.get_date
 
-    else:       
+    else:
         t_delta = datetime.timedelta(hours=9)
         JST = datetime.timezone(t_delta, 'JST')
         now = datetime.datetime.now(JST)
         date_time = now.strftime('%y%m%d_%H%M%S')
 
-    # 出力するディレクトリ名を決めるための処理    
+    # 出力するディレクトリ名を決めるための処理
 
     if args.another_analysis == 293: another_name = "anl"
     else: another_name = "WOanl"
@@ -43,7 +43,7 @@ def dir_name_getter(args):
     else: stims_name = "WOstims"
 
     save_dir = f"results/{date_time}_{args.max_words}_{args.model_opt}_{args.dict_mecab}_{args.extract_noun_opt}_{file_name_getter(args)}"
-    
+
     return save_dir
 
 
@@ -63,7 +63,7 @@ def html_writer(body, result_dir:str, output_file:str, args):
             </head>
             <body>
             <h2>{result_dir}</h2>
-            {body} 
+            {body}
             </body>
             </html>
         '''

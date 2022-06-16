@@ -26,7 +26,7 @@ class SearchFromHukusuuSigeki():
             df_idx_list = [i for i in range(len(df))]
             for idx, row in zip(df_idx_list, df.itertuples()):
                 v_row = {'answer': row.answer, 'stims': ast.literal_eval(row.stims), 'category': row.category}
-                self.results[idx] = v_row                
+                self.results[idx] = v_row
                 # self.results_toigo[key] = row[-1]
                 # self.results_kankei[key] = row[-1]
 
