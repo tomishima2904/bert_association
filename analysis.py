@@ -38,9 +38,10 @@ class Analyzer(object):
         result_match = []
         for i, result in enumerate(results.itertuples()):
             if self.args.another_analysis == 293:
-                if self.args.reverse_flag:
-                    human_words = self.categories_and_sentences[result.category]['synonyms']
-                else:
+                if self.args.reverse_flag:  # カテゴリーを答えさせる場合
+                    # human_words = self.categories_and_sentences[result.category]['synonyms']  # 類似語も正解とする場合
+                    human_words = [result.category]  # 類似語は正解とせず、代表カテゴリー語のみを正解とする場合
+                else:  # 正解語を答えさせる場合
                     human_words = ast.literal_eval(result.answer)
 
                 for l, human_word in enumerate(human_words):
@@ -83,11 +84,12 @@ class Analyzer(object):
                     if j % bert_interval == bert_interval-1:
                         not_bert_and_human_num.append(len(not_bert_and_human_word))
 
-                # category = self.toigo[ast.literal_eval(result.answer)[0]]
-                result_tmp = result.sid, result.stims, result.input_sentence, result.answer, result.category, result.category_synonyms, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                # result_tmp = result.sid, result.stims, result.input_sentence, result.answer, result.category, result.category_synonyms, human_words_rank, bert_and_human_word, bert_and_human_score, not_bert_and_human_word, not_bert_and_human_score, not_bert_and_human_num
+                result_tmp = result.sid, result.stims, result.input_sentence, result.answer, result.category, result.category_synonyms, human_words_rank, bert_and_human_word, bert_and_human_score, result.output_words, result.output_scores
                 result_match.append(result_tmp)
 
-        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'ranks', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
+        # header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'ranks', 'corr_word', 'corr_score', 'err_words', 'err_scores', 'num_err_per_iv']
+        header_results = ['sid', 'stims', 'input_sentence', 'answer', 'category', 'category_synonyms', 'ranks', 'corr_word', 'corr_score', 'output_words', 'output_scores']
 
         csv_writer(header=header_results, result=result_match, csv_file_path=output_csv)
 
