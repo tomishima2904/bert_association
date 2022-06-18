@@ -64,6 +64,8 @@ class Analyzer2(Analyzer):
     def attention_visualizasion(self, results_csv:str):
         results_path = f'{results_csv}/result_attentions_and_raws_{file_name_getter(self.args)}.csv'
         results = csv_results_reader(results_path)
+        results_path = f'{results_csv}/result_{file_name_getter(self.args)}.csv'
+        summary_results = csv_results_reader(results_path)
         attnetion_weights = self.attention_weights_handler(results)
         tokenized_sentences = results.tokenized_sentence
         tokenized_sentences = [ast.literal_eval(sentence) for sentence in tokenized_sentences]
@@ -75,7 +77,7 @@ class Analyzer2(Analyzer):
         displayed_color_bar_indices = [0]
         result_html = color_bar
 
-        for sid, sentence, attns, category, answer in zip(results.sid, tokenized_sentences, attnetion_weights, results.category, results.answer):
+        for sid, sentence, attns, category, answer, output_words in zip(results.sid, tokenized_sentences, attnetion_weights, results.category, results.answer, summary_results.output_words):
             assert len(sentence) == len(attns[0])
             if not self.args.sep_flag:
                 del sentence[-1]
@@ -97,7 +99,7 @@ class Analyzer2(Analyzer):
                     attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
 
             # display(HTML(attn_output_html))  # uncomment out to display on jupyter
-            tagged_attn_output_html = f'{attn_output_html} (c:{category}, a:{answer})<br>\n'
+            tagged_attn_output_html = f'{attn_output_html}  {str(ast.literal_eval(output_words)[:5])}<br>\n'
             result_html += tagged_attn_output_html
 
         if self.args.avg_flag: avg_name = 'avg'
