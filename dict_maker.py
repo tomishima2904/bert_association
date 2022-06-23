@@ -3,7 +3,7 @@ import pandas as pd
 import ast
 
 
-class SearchFromHukusuuSigeki():
+class SearchBasedOnStimulations():
     def __init__(self, args, path_for_jupyter=None, encoding_type="utf-8"):
         if path_for_jupyter:
             path = path_for_jupyter
@@ -75,9 +75,6 @@ class SearchFromHukusuuSigeki():
 
     def get_keywords(self):
         return self.results.keys()
-
-    # def get_toigo(self):
-    #    return self.results_toigo
 
     def get_kankei(self):
         return self.results_kankei

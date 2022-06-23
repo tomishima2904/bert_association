@@ -6,7 +6,7 @@ import pandas as pd
 
 sys.path.append('.')
 from file_handler import *
-from dict_maker import SearchFromHukusuuSigeki
+from dict_maker import SearchBasedOnStimulations
 from config import args
 import utils_tools
 
@@ -16,7 +16,7 @@ class Analyzer(object):
         self.args = args
 
         if args.multi_stims_flag:
-            self.hukusuu_sigeki = SearchFromHukusuuSigeki(args=args)
+            self.hukusuu_sigeki = SearchBasedOnStimulations(args=args)
             self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
             self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
             # 複数の刺激語バージョンにおける、正解と不正解のリスト

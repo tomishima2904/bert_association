@@ -11,14 +11,14 @@ import io,sys
 
 # 自作ファイルからのインポート
 sys.path.append('.')
-from dict_maker import SearchFromHukusuuSigeki
+from dict_maker import SearchBasedOnStimulations
 import utils_tools
 from models import Model
 from analysis2 import Analyzer2
 from file_handler import *
 from config import args
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')  # 日本語を取り扱う時はとりあえずこれを書いておくといいかも
 
 
 # B4の頃から違法増築を繰り返した結果、一つのクラスに色々詰め込むゴミクラスが完成した...
@@ -26,77 +26,59 @@ class BertAssociation():
     # kwargsとか使った方がいい...
     def __init__(self, args):
 
-        self.args = args
+        self.args = args  # configやコマンドライン引数から設定した引数を渡す
 
-        self.model_opt = args.model_opt  # str. モデルを定める.
-        self.framework_opt = args.framework_opt  # str. 使用するフレームワークを定める(学習しないのであまり区別する意味はないが...)
+        if self.args.reverse_flag: assert self.args.category_opt=='cat'  # category_optが 'cat' じゃないとrevをできないようにする
+        if self.args.reverse_flag: self.target_mask = '{cat}'  # 'rev' の場合カテゴリーを答えさせるので utils_tools にある連想文の {cat} が[MASK]になる
+        else: self.target_mask = '{ans}'  # 'rev' 以外なら utils_tools にある連想文の {ans} が[MASK]になる
 
-        if self.args.reverse_flag: assert self.args.category_opt=='cat'
-        if self.args.reverse_flag: self.target_mask = '{cat}'
-        else: self.target_mask = '{ans}'
+        mecab_option = f"-d {self.args.packages_path}/{self.args.dict_mecab}/dicdir -r {self.args.packages_path}/{self.args.dict_mecab}/dicdir/mecabrc"  # 名詞判定で使用するmecabの設定
 
-        # 問い語(=限定語)を使用するかどうか。
-        # Trueの場合は「都道府県は～」「色は～」という連想文になる。
-        # Falseの場合は「言葉は～」という連想文になる。
-        # utils_tools.pyに連想文を書いてある。
-        self.category_opt = args.category_opt
-
-        # flagと書いてあるけどstr型その3。名詞を抽出する際に使用するライブラリ？を定める
-        # mecab...MeCabを使用する
-        # ginza...Ginzaを使用する
-        self.extract_noun_opt = args.extract_noun_opt
-
-        # 名詞判定で使用するmecabの設定(環境に合わせて設定してね。これは相馬のローカル環境の例)
-        mecab_option = f"-d {self.args.packages_path}/{self.args.dict_mecab}/dicdir -r {self.args.packages_path}/{self.args.dict_mecab}/dicdir/mecabrc"
-
-        if self.framework_opt == "tf":
+        if args.framework_opt == "tf":
             print(tf.__version__)
             model_object = Model(mecab_option, args)
             self.tokenizer = model_object.tokenizer
             self.model = model_object.model
             self.mecab = model_object.mecab
 
-        # spacy の ginza モデルをインストール
-        self.ginza = spacy.load('ja_ginza')
+        self.ginza = spacy.load('ja_ginza')  # spacy の ginza モデルをインストール
 
         if args.multi_stims_flag:
-            self.hukusuu_sigeki = SearchFromHukusuuSigeki(args=args)
-            self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
-            self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
+            self.search_based_on_stimulations = SearchBasedOnStimulations(args)
+            self.paraphrase = self.search_based_on_stimulations.get_paraphrase_hukusuu_sigeki()
+            self.nayose = self.search_based_on_stimulations.get_nayose_hukusuu_sigeki()
             # 複数の刺激語バージョンにおける、正解と不正解のリスト
-            self.dict_keywords = self.hukusuu_sigeki.get_dict()
+            self.dict_keywords = self.search_based_on_stimulations.get_dict()
 
             # wikipediaの出現頻度とか共起頻度とか分かる（予定）
-            # self.toigo = self.hukusuu_sigeki.get_toigo()
-            self.kankei = self.hukusuu_sigeki.get_kankei()
+            # self.toigo = self.search_based_on_stimulations.get_toigo()
+            self.kankei = self.search_based_on_stimulations.get_kankei()
         else:
             pass
 
-        self.multi_stims_flag = args.multi_stims_flag
-
-        if args.category_opt=='cat':
+        if args.category_opt=='cat':  # カテゴリー指定有の場合
             self.categories_and_sentences = utils_tools.base_sentences_and_synonyms
-        elif args.category_opt=='WOcat':
+        elif args.category_opt=='WOcat':  # カテゴリー指定無の場合(論文でのカテゴリー指定無との使われ方が違うので注意！)
             self.base_sentence = utils_tools.base_sentence_without_category
-        elif args.category_opt=='kotoba':
+        elif args.category_opt=='kotoba':  # 「言葉」とする場合(論文でのカテゴリー指定無はこちら)
             self.base_sentence = utils_tools.base_sentence
-        else:
+        else:  # 上記以外の文字列を受けとった場合はエラー
             print('category option error\n')
             sys.exit()
 
 
     def __call__(self, results_dir):
-        results = []
-        results_attention_and_raw = []
-        results_summary = []
-        results_all_summary = []
+        results = []  # result_xx.csvとして出力する結果
+        results_attention_and_raw = []  # result_attentions_and_raws_xx.csvとして出力する結果
+        results_summary = []  # result_summary_xx.csvとして出力する結果
+        results_all_summary = []  # results_all_summaryとして出力する結果
+
         # 複数→1つバージョンでは、answerは正解の連想語、keywordsは刺激語のリストのリスト
-        # (謝罪) 1つ→複数の頃の名残でanswerという変数名だけど、複数→1つでは正解の連想語が入ります...
         for sid, values in self.dict_keywords.items():
-            if self.multi_stims_flag:
+            if args.multi_stims_flag:
                 # 連想文(str型)を作成する(この段階では刺激語はまだ入っていない)
                 # input_sentencesはlist型
-                if self.category_opt=='cat':
+                if args.category_opt=='cat':
                     base_sentence = self.categories_and_sentences[values['category']]
                     if  ( '{cat}' not in base_sentence['sentence']) and self.args.reverse_flag: continue
                     else: input_sentences, category_synonyms = self._keywords_to_sentences(values=values)
@@ -108,11 +90,8 @@ class BertAssociation():
                 pass
 
             # 連想語頻度表から単語を持ってくる.
-            if self.multi_stims_flag:
-                # 相馬が決定した87題の中には、同じ正解語が含まれる(例：魚)ので、
-                # 辞書のキーが魚、魚_2、魚_2_3のようになっている
-                # 正解を判定する際には「_2」や「_2_3」は取り除かれる
-                human_words = [values['answer']]
+            if args.multi_stims_flag:
+                human_words = [values['answer']]  # 正解語を設定する  str->list
             else:
                 pass
             print(input_sentences)
@@ -121,9 +100,7 @@ class BertAssociation():
             # 1つのキーワードで複数の入力文があるため, for文で愚直に回す
             for i, input_sentence in enumerate(input_sentences):
                 # 連想
-                # association_words_rawsは出力単語そのまま(変数名のrawは"生"。ローマ字で変数名を付けるのはやめよう！)
-                # association_words_scoreは単語のスコア(おそらく、softmaxに通す前のlogits)
-                # attenion_resultはattention(一応、全てのTransformer層から出力してあるはず...)
+                # 生の出力語, その出力語のlogitsの値, 全層全ヘッドのattention weight
                 association_words_raws, association_score_raws, attention_result = self.association(input_sentence, human_words)
 
                 # ここのfor文で出力単語そのままではなく、刺激語を除いたり名詞だけ抽出したりする
@@ -132,7 +109,7 @@ class BertAssociation():
                     association_words, association_score, extract_num = self._extract_noun_from_output(association_words_raw, association_score_raw)
 
                     # 刺激語を除く
-                    if self.multi_stims_flag:
+                    if args.multi_stims_flag:
                         for stim in values['stims']:
                             association_words, association_score, extract_num = self._extract_paraphrase_from_output(stim, values, association_words, association_score)
                     else:
@@ -143,8 +120,8 @@ class BertAssociation():
                         association_words, association_score, extract_num = self._nayose_from_output(association_words, association_score)
 
                     # 結果を保存する
-                    if self.multi_stims_flag:
-                        if self.category_opt: sentence_id = f'{sid:0>3}-{i:0>2}'
+                    if args.multi_stims_flag:
+                        if args.category_opt: sentence_id = f'{sid:0>3}-{i:0>2}'
                         else: sentence_id = f'{sid:0>3}-'
                         result_list = [sentence_id, values['stims'], input_sentence, human_words, values['category'], category_synonyms[i], association_words, association_score]
                         tokenized_text = self.tokenizer.tokenize(input_sentence)
@@ -194,40 +171,42 @@ class BertAssociation():
         input_sentences = []
         category_synonyms = []
 
-        # 問い語(=限定語)を付与する場合
-        if self.category_opt=='cat':
+        # カテゴリー指定有の場合
+        if args.category_opt=='cat':
             # {stims}は刺激語に置換する
-            base_sentence = self.categories_and_sentences[values['category']]
+            base_sentence = self.categories_and_sentences[values['category']]  # base_sentenceは元となる文
+            # カテゴリー指定語が単語で表せない場合
             if len(base_sentence['synonyms']) == 0:
                 sentence_parts = []
                 for part in base_sentence['sentence']:
-                    if part == self.target_mask:
-                        if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')
-                        else: sentence_parts.append('[MASK]')
+                    if part == self.target_mask:  # [MASK]に置換
+                        if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')  # 「」有
+                        else: sentence_parts.append('[MASK]')  # 「」無
                     elif part == "{stims}":
-                        sentence_parts.append('、'.join(values['stims']))
+                        sentence_parts.append('、'.join(values['stims']))  # 連想文の {stims} を刺激語を置換
                     elif part == '{ans}':
-                        sentence_parts.append(values['answer'])
+                        sentence_parts.append(values['answer'])  # 連想文の {ans} を正解語を置換
                     elif part == '{cat}':
-                        sentence_parts.append(values['category'])
+                        sentence_parts.append(values['category'])  # 連想文の {cat} をカテゴリー指定語を置換
                     else:
                         sentence_parts.append(part)
                 category_synonyms.append(values['category'])
                 sentence = ''.join(sentence_parts)
                 input_sentences.append(sentence)
+            # カテゴリー指定語が単語で表せる場合
             else:
                 for synonym in base_sentence['synonyms']:
                     sentence_parts = []
                     for part in base_sentence['sentence']:
-                        if part == self.target_mask:
-                            if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')
-                            else: sentence_parts.append('[MASK]')
+                        if part == self.target_mask:  # [MASK]に置換
+                            if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')  # 「」有
+                            else: sentence_parts.append('[MASK]')  # 「」無
                         elif part == "{stims}":
-                            sentence_parts.append('、'.join(values['stims']))
+                            sentence_parts.append('、'.join(values['stims']))  # 連想文の {stims} を刺激語を置換
                         elif part =='{ans}':
-                            sentence_parts.append(values['answer'])
+                            sentence_parts.append(values['answer'])  # 連想文の {ans} を正解語を置換
                         elif part == '{cat}':
-                            sentence_parts.append(synonym)
+                            sentence_parts.append(synonym)  # 文中に {cat} は存在しないので意味のない文かも
                         else:
                             sentence_parts.append(part)
 
@@ -240,24 +219,23 @@ class BertAssociation():
                         if len(synonym) == 0: category_synonyms.append('0nan')
                         else: category_synonyms.append(synonym)
 
-            return input_sentences, category_synonyms
+            return input_sentences, category_synonyms  # 入力文, カテゴリー指定語の類似語
 
-        # 問い語(=限定語)を付与しない場合
+        # カテゴリー指定有以外の場合
         else:
-            # {stims}は刺激語に置換する
             sentence_parts = []
             for part in self.base_sentence:
-                if part == self.target_mask:
-                    if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')
-                    else: sentence_parts.append('[MASK]')
+                if part == self.target_mask:  # [MASK]に置換
+                    if self.args.brackets_flag:  sentence_parts.append('「[MASK]」')  # 「」有
+                    else: sentence_parts.append('[MASK]')  # 「」無
                 elif part == "{stims}":
-                    sentence_parts.append('、'.join(values['stims']))
+                    sentence_parts.append('、'.join(values['stims']))  # 連想文の {stims} を刺激語を置換
                 else:
                     sentence_parts.append(part)
             sentence = ''.join(sentence_parts)
             input_sentences.append(sentence)
 
-            return input_sentences
+            return input_sentences  # 入力文
 
 
     # 連想を行い, 上位n位までのリストを返す関数
@@ -271,7 +249,7 @@ class BertAssociation():
         predicted_tokens_list = []
         predicted_values_list_list = []
 
-        if self.framework_opt == "tf":
+        if args.framework_opt == "tf":
 
             # テキストをトークナイザに入力(東北大学BERTの場合は、MeCab+WordPiece)
             tokenized_text = self.tokenizer.tokenize(text)
@@ -286,7 +264,7 @@ class BertAssociation():
             # トークンをIDに変換する
             tokenized_id = self.tokenizer.convert_tokens_to_ids(tokenized_text)
 
-            if self.model_opt == "cl-tohoku" or self.model_opt == "addparts":
+            if args.model_opt == "cl-tohoku" or args.model_opt == "addparts":
 
                 # 入力形式を整える
                 tokenized_tensor = tf.constant(tokenized_id)
@@ -306,7 +284,7 @@ class BertAssociation():
                 for index in masked_indicies:
                     predicteds.append(tf.math.top_k(predictions[0, index], k=self.args.max_words))
 
-            elif self.model_opt == "gmlp":
+            elif args.model_opt == "gmlp":
                 # 多分 tf.constant の長さを 128 にしないといけない
                 tokenized_tensor = tf.constant(tokenized_id)
                 zeros = tf.zeros([128 - len(tokenized_tensor)], tf.int32)
@@ -343,7 +321,7 @@ class BertAssociation():
             predicted_values_list_list.append(predicted_values_list)
 
         # attentionsの分析を行う
-        if self.model_opt != "gmlp":
+        if args.model_opt != "gmlp":
             attention_result = self._analysis_attentions(attentions, masked_indicies)
         else:
             attention_result = []
@@ -353,31 +331,19 @@ class BertAssociation():
 
     # attentionsの分析を行う関数(途中なので、ここを改造してほしい)
     def _analysis_attentions(self, attentions, masked_indicies):
-        if self.multi_stims_flag:
+        if args.multi_stims_flag:
             attention_result = []
-            # 分析対象のTransformer層(-1は最終層、この数値はconfigで変更できるようにした方がいい)
-            transformer_layer = attentions[self.args.target_layer]
-            # Attention_Headの数(本当はBERTのconfig.jsonを参照した方がいい)
-            attention_head_num = 12
+            transformer_layer = attentions[self.args.target_layer]  # tatget_layer番目の層のattentionを取り出す
+            attention_head_num = 12  # Attention_Headの数(本当はBERTのconfig.jsonを参照した方がいい)
             # if self.args.target_heads == None:
             for head in range(attention_head_num):
-                attn_of_mask = transformer_layer[0][head][masked_indicies[0]]
+                attn_of_mask = transformer_layer[0][head][masked_indicies[0]]  # 対象のattention-headのattention-weightを取り出す
                 attention_result.append(attn_of_mask.numpy().tolist())
 
             # else:
             #     attn_of_mask = transformer_layer[0][self.args.target_heads][masked_indicies[0]]
             #     attention_result.append(attn_of_mask.numpy().tolist())
 
-            """
-                transformer_layer番目の層を取り出す
-                attentions[transformer_layer]
-                attention_head番目の層を取り出す
-                attentions[transformer_layer][0][attention_head]
-                maskからのattentionを取り出す
-                attentions[transformer_layer][0][attention_head][masked_indiceis]
-                maskからの該当単語へのattentionを取り出す
-                attentions[transformer_layer][0][attention_head][masked_indiceis][word_index]
-            """
             return attention_result
 
 
@@ -393,16 +359,16 @@ class BertAssociation():
             if association_word == "[UNK]" or "##" in association_word:
                 continue
             # ginzaで処理する場合
-            if self.extract_noun_opt == "ginza":
+            if args.extract_noun_opt == "ginza":
                 doc = self.ginza(association_word)
                 # print(doc)
                 if doc[0].pos_ == "NOUN" or doc[0].pos_ == "PROPN":
                     association_words_extract_noun.append(association_word)
                     association_score_extract_noun.append(association_score[i])
             # mecabで処理する場合
-            elif self.extract_noun_opt == "mecab":
+            elif args.extract_noun_opt == "mecab":
                 # mecab + 東北大学バージョン
-                if (self.model_opt == "cl-tohoku") or (self.model_opt == "addparts") or (self.model_opt == "gmlp"):
+                if (args.model_opt == "cl-tohoku") or (args.model_opt == "addparts") or (args.model_opt == "gmlp"):
                     nouns = [line.split()[0] for line in self.mecab.parse(association_word).splitlines()
                              if "名詞" in line.split()[-1]]
                     if nouns != []:
@@ -423,7 +389,7 @@ class BertAssociation():
 
         for i, association_word in enumerate(association_words):
             # 連想文の〇〇、〇〇、〇〇...の都道府県は？の都道府県部分を除く
-            if self.multi_stims_flag:
+            if args.multi_stims_flag:
                 if not self.args.reverse_flag:
                     if association_word == values['category']:
                         continue

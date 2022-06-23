@@ -32,20 +32,23 @@ class Analyzer2(Analyzer):
         return html
 
 
+    # attneion-weightに対して各ヘッドの平均を取ったりする
     def attention_weights_handler(self, results):
         # tokenized_sentences = results.tokenized_sentence.to_list()
         all_heads_attns = results.attn_weights_of_mask
         converted_attns = []
+        # target_headsが-1を含んでいたら全ヘッドを対象とする
         if -1 in self.args.target_heads:
             for attns in all_heads_attns:
                 attns = np.array(ast.literal_eval(attns))
-                if self.args.avg_flag:
+                if self.args.avg_flag:  # 各ヘッドの平均をとる
                     averaged_attn = np.average(attns, axis=0)
                     averaged_attn = averaged_attn[np.newaxis, :]
                     converted_attns.append(averaged_attn)
-                else:
+                else:  # 平均を取らずそのまま返す
                     converted_attns.append(attns)
 
+        # 全ヘッドは対象としない場合
         else:
             for attns in all_heads_attns:
                 attns = np.array(ast.literal_eval(attns))
@@ -60,40 +63,42 @@ class Analyzer2(Analyzer):
 
         return converted_attns
 
-
+    # attention を可視化する
     def attention_visualizasion(self, results_csv:str):
         results_path = f'{results_csv}/result_attentions_and_raws_{file_name_getter(self.args)}.csv'
         results = csv_results_reader(results_path)
-        results_path = f'{results_csv}/result_{file_name_getter(self.args)}.csv'
+        results_path = f'{results_csv}/result_{file_name_getter(self.args)}.csv'  # 対象となるcsvファイルのパス
         summary_results = csv_results_reader(results_path)
         attnetion_weights = self.attention_weights_handler(results)
         tokenized_sentences = results.tokenized_sentence
         tokenized_sentences = [ast.literal_eval(sentence) for sentence in tokenized_sentences]
         assert len(attnetion_weights) == len(results.tokenized_sentence)
 
-        color_bar_attn = [i*0.05 for i in range(21)]
-        color_bar_str = [f'{i:.2f}' for i in color_bar_attn]
-        color_bar = f' >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <br>\n'
+        color_bar_attn = [i*0.05 for i in range(21)]  # color bar's attention weight
+        color_bar_str = [f'{i:.2f}' for i in color_bar_attn]  # color bar
+        color_bar = f' >>>>>{self._mk_html(color_bar_str, color_bar_attn)} <<<<< <br>\n'  # visualize color bar
         displayed_color_bar_indices = [0]
         result_html = color_bar
 
         for sid, sentence, attns, category, answer, output_words in zip(results.sid, tokenized_sentences, attnetion_weights, results.category, results.answer, summary_results.output_words):
             assert len(sentence) == len(attns[0])
-            if not self.args.sep_flag:
+            if not self.args.sep_flag:  # Remove [SEP] token If sep_flag is NOT True
                 del sentence[-1]
                 attns = [attn[:-1] for attn in attns]
                 # attns = softmax(attns, axis=1)  # normalize by softmax
-                attns = preprocessing.minmax_scale(attns, axis=1)
+                attns = preprocessing.minmax_scale(attns, axis=1)  # normalize attneion-weight after removing [SEP] token
 
-            if int(sid[:3]) % 10 == 0 and int(sid[:3]) not in displayed_color_bar_indices:
+            if int(sid[:3]) % 10 == 0 and int(sid[:3]) not in displayed_color_bar_indices:  # display a color bar per 10 sentences
                 result_html += color_bar
                 displayed_color_bar_indices.append(int(sid[:3]))
+
+            # display averaged attention
             if self.args.avg_flag:
                 for attn in attns:
                     attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
-
+            # display each head's attention
             else:
-                if self.args.target_heads == None: target_heads = [head for head in range(12)]
+                if -1 in self.args.target_heads: target_heads = [head for head in range(12)]
                 else: target_heads = self.args.target_heads
                 for head, attn in zip(target_heads, attns):
                     attn_output_html = f'{sid}: {self._mk_html(sentence, attn)}'
