@@ -15,20 +15,17 @@ class Analyzer(object):
     def __init__(self, args) -> None:
         self.args = args
 
-        if args.multi_stims_flag:
-            self.hukusuu_sigeki = SearchBasedOnStimulations(args=args)
-            self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
-            self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
-            # 複数の刺激語バージョンにおける、正解と不正解のリスト
-            self.dict_keywords = self.hukusuu_sigeki.get_dict()
-            # wikipediaの出現頻度とか共起頻度とか分かる（予定）
-            # self.toigo = self.hukusuu_sigeki.get_toigo()
-            self.kankei = self.hukusuu_sigeki.get_kankei()
-            if args.reverse_flag:
-                self.categories_and_sentences = utils_tools.base_sentences_and_synonyms
+        self.hukusuu_sigeki = SearchBasedOnStimulations(args=args)
+        self.paraphrase = self.hukusuu_sigeki.get_paraphrase_hukusuu_sigeki()
+        self.nayose = self.hukusuu_sigeki.get_nayose_hukusuu_sigeki()
+        # 複数の刺激語バージョンにおける、正解と不正解のリスト
+        self.dict_keywords = self.hukusuu_sigeki.get_dict()
+        # wikipediaの出現頻度とか共起頻度とか分かる（予定）
+        # self.toigo = self.hukusuu_sigeki.get_toigo()
+        self.kankei = self.hukusuu_sigeki.get_kankei()
+        if args.reverse_flag:
+            self.categories_and_sentences = utils_tools.base_sentences_and_synonyms
 
-        else:
-            pass
 
     # 出力結果の分析
     def analysis_result_match_nayose(self, results_csv, output_csv, bert_interval=1):
@@ -99,11 +96,10 @@ class Analyzer(object):
         results = pd.read_csv(results_csv, header=0, engine="python")
 
         # 連想文の組み合わせ
-        if self.args.multi_stims_flag:
-            if self.args.category_opt:
-                rensoubun_numbers = [[0]]
-            else:
-                rensoubun_numbers = [[0]]
+        if self.args.category_opt:
+            rensoubun_numbers = [[0]]
+        else:
+            rensoubun_numbers = [[0]]
 
         with open(output_csv, 'w', newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -117,8 +113,7 @@ class Analyzer(object):
                         word_num_dicts = []
                         word_num_dict = {}
                         scores = []
-                        if self.args.multi_stims_flag:
-                            keywords = dict_keywords
+                        keywords = dict_keywords
 
                         for keyword in keywords:
                             if kan == "全部":

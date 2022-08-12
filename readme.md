@@ -13,7 +13,6 @@ python bert_experiment.py \
 	--framework_opt='tf' \
 	--max_words=150 \
 	--model_opt='cl-tohoku' \
-	--multi_stims_flag=True \
 	--num_stims=5 \
 	--output_nayose_flag=True \
 	--output_words_from_bert=True \
@@ -22,9 +21,9 @@ python bert_experiment.py \
 	--target_layer=-1 \
     --reverse_flag='f' \
 	--category_opt='cat'
-```               
-   - flag系は`True`や`t`もしくは`False`や`f`で選択
-   - `target_heads`等はリストが引数となる．`[2, 4, 5]`のように引数を渡したければ`--target_heads 2 4 5`とする
+```
+        - flag系は`True`や`t`もしくは`False`や`f`で選択
+        - `target_heads`等はリストが引数となる．`[2, 4, 5]`のように引数を渡したければ`--target_heads 2 4 5`とする
 3. result内に結果が出力される
 
 

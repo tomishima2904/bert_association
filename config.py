@@ -20,7 +20,6 @@ parser.add_argument('--dataset_dir', default='extract_keywordslist', type=str, h
 parser.add_argument('--eval_opt', default='p', type=str, help='[p, MRR]')
 parser.add_argument('--framework_opt', default='tf', type=str, help='Specify a framework')
 parser.add_argument('--get_date', default=None, help='date_time for hits@k')
-parser.add_argument('--multi_stims_flag', default=True, type=strtobool, help='Version of stimulating')
 parser.add_argument('--output_nayose_flag', default=True, type=strtobool, help='Nayose or not')
 parser.add_argument('--output_words_from_bert', default=True, type=strtobool, help='Output words from BERT or not')
 parser.add_argument('--packages_path', default='/home/tomishima2904/.local/lib/python3.6/site-packages', type=str, help='path where packages exist')
